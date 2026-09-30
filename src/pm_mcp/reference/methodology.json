@@ -1,0 +1,231 @@
+{
+  "description": "Curated classification of every item of the reference material and the methodology rules the engine implements. Rules cite the items they were derived from. No exercise numbers here are used for calculation.",
+  "categories": [
+    "conceptual_explanation",
+    "formula",
+    "worked_example",
+    "problem_statement",
+    "gantt_convention",
+    "network_convention",
+    "pert_material",
+    "cpm_material",
+    "crashing_material",
+    "decorative"
+  ],
+  "sources": {
+    "exercise_docx": "Exercise document (workshop 1): problem statement a)–g), activity-on-arrow figure, three-point estimate table and PERT formula images.",
+    "concepts_xlsx": "General concepts workbook: sheets 'Diagrama Gantt (2)', 'Diagrama Gantt', 'Red Actividad Nodo', 'PERT Probabilístico', 'CPM', 'Problema 2 CPM', 'Hoja1'. Content is almost entirely pasted images; there are no live formulas."
+  },
+  "rules": {
+    "pert_expected_time": {
+      "topics": ["pert"],
+      "formula": "(a + b + 4*m) / 6",
+      "statement": "Expected activity time for the beta (three-estimate) distribution.",
+      "engine": "pm_mcp.engine.pert.expected_time",
+      "sources": ["exercise_docx:word/media/image4.png", "concepts_xlsx:xl/media/image15.png", "concepts_xlsx:xl/media/image18.png"]
+    },
+    "pert_activity_variance": {
+      "topics": ["pert"],
+      "formula": "((b - a) / 6) ** 2",
+      "statement": "Activity variance for the three-estimate distribution.",
+      "engine": "pm_mcp.engine.pert.activity_variance",
+      "sources": ["exercise_docx:word/media/image5.png", "concepts_xlsx:xl/media/image15.png", "concepts_xlsx:xl/media/image18.png"]
+    },
+    "project_variance": {
+      "topics": ["pert", "probability"],
+      "statement": "Variance of the expected project time = sum of the variances of the activities on the critical path ('Sumatorio total de las actividades críticas').",
+      "engine": "pm_mcp.engine.pert.aggregate_critical_path_variance",
+      "note": "The material only shows single-critical-path cases; with several critical paths the engine uses the path of largest variance by default (option: sum all critical activities) and reports every path.",
+      "sources": ["exercise_docx:word/media/image6.png", "concepts_xlsx:xl/media/image19.png", "concepts_xlsx:xl/media/image20.png"]
+    },
+    "project_standard_deviation": {
+      "topics": ["pert", "probability"],
+      "formula": "sqrt(sum of critical activity variances)",
+      "engine": "pm_mcp.engine.pert.aggregate_critical_path_variance",
+      "sources": ["exercise_docx:word/media/image1.png", "exercise_docx:word/media/image7.png", "concepts_xlsx:xl/media/image20.png"]
+    },
+    "standardization": {
+      "topics": ["probability"],
+      "formula": "(T_p - t_e) / sigma",
+      "statement": "Z = (predetermined time − expected minimum project time) / standard deviation of the expected minimum project time; P(T ≤ T_p) = Φ(Z).",
+      "engine": "pm_mcp.engine.probability.calculate_completion_probability",
+      "sources": ["exercise_docx:word/media/image8.png", "concepts_xlsx:xl/media/image20.png"]
+    },
+    "probability_complements": {
+      "topics": ["probability"],
+      "statement": "P(T > x) = 1 − P(T ≤ x); P(x1 ≤ T ≤ x2) = P(T ≤ x2) − P(T ≤ x1).",
+      "engine": "pm_mcp.engine.probability.calculate_completion_probability",
+      "sources": ["concepts_xlsx:xl/media/image21.png", "concepts_xlsx:xl/media/image27.png", "concepts_xlsx:xl/media/image28.png"]
+    },
+    "probability_table_convention": {
+      "topics": ["probability"],
+      "statement": "Worked examples round Z to two decimals and read Φ(Z) from a four-decimal normal table (e.g. Z = 1.6036 is used as 1.60, Φ = 0.9452).",
+      "engine": "pm_mcp.engine.probability.table_cdf",
+      "sources": ["concepts_xlsx:xl/media/image20.png", "concepts_xlsx:xl/media/image24.png"]
+    },
+    "percentile_convention": {
+      "topics": ["probability"],
+      "statement": "For a target probability, take from the table the Z whose Φ reaches it (Z = 1.29 for 0.90), compute T_p = t_e + Z·σ, and round up to the next whole time unit when whole units are required.",
+      "engine": "pm_mcp.engine.probability.calculate_percentile_duration",
+      "sources": ["concepts_xlsx:xl/media/image22.png", "concepts_xlsx:xl/media/image23.png"]
+    },
+    "four_significant_times": {
+      "topics": ["cpm", "gantt"],
+      "statement": "Earliest start (as soon as precedences allow), latest start (without altering the minimum project duration), earliest finish, latest finish.",
+      "engine": "pm_mcp.engine.cpm.calculate_cpm",
+      "sources": ["concepts_xlsx:xl/media/image10.png"]
+    },
+    "slack": {
+      "topics": ["cpm", "gantt"],
+      "formula": "LS - ES == LF - EF",
+      "statement": "Slack (holgura) is the maximum delay of an activity without altering the minimum project duration; zero-slack activities are critical.",
+      "engine": "pm_mcp.engine.cpm.calculate_cpm",
+      "sources": ["concepts_xlsx:xl/media/image1.png", "concepts_xlsx:xl/media/image5.png", "concepts_xlsx:xl/media/image11.png", "concepts_xlsx:xl/media/image12.png"]
+    },
+    "project_duration_multiple_terminals": {
+      "topics": ["cpm"],
+      "statement": "With several terminal activities the minimum project time is the largest earliest finish among them.",
+      "engine": "pm_mcp.engine.cpm.calculate_cpm",
+      "sources": ["concepts_xlsx:xl/media/image36.png", "concepts_xlsx:xl/media/image46.png"]
+    },
+    "gantt_layout": {
+      "topics": ["gantt"],
+      "statement": "Double-entry table: activities in rows, elapsed time units in columns. Two rows per activity: first row bars start as early as possible respecting precedence (ES→EF); second row bars start as late as possible without delaying the project (LS→LF). An 'Observaciones' column marks 'Actividad Crítica' (shaded) or 'Holgura de N semanas'.",
+      "engine": "pm_mcp.engine.gantt.generate_gantt_schedule",
+      "sources": ["concepts_xlsx:xl/media/image6.png", "concepts_xlsx:xl/media/image3.png", "concepts_xlsx:xl/media/image4.png", "concepts_xlsx:xl/media/image9.png"]
+    },
+    "aon_preferred": {
+      "topics": ["network"],
+      "statement": "Of the two representations (ACTIVIDAD-RAMAL: activities on arcs, nodes are events; ACTIVIDAD-NODO: activities on nodes, arcs are precedences) the material uses ACTIVIDAD-NODO (Bernard Roy method).",
+      "sources": ["concepts_xlsx:Diagrama Gantt (2)!B28", "concepts_xlsx:xl/media/image14.png"]
+    },
+    "aon_node_notation": {
+      "topics": ["network"],
+      "statement": "Node = circle split into cells: activity name | activity duration; earliest start | earliest finish; latest start | latest finish; slack at the bottom. Critical nodes are shaded and critical arcs drawn as double lines.",
+      "engine": "pm_mcp.output.network_diagram.render_network_png",
+      "sources": ["concepts_xlsx:xl/media/image14.png", "concepts_xlsx:xl/media/image19.png", "concepts_xlsx:xl/media/image36.png"]
+    },
+    "aoa_to_aon": {
+      "topics": ["network"],
+      "statement": "Exercise figures may be activity-on-arrow networks (numbered event nodes, lettered arrows, dashed dummy 'ficticia' arrows). Precedences are read off the arrow network first — an activity follows every activity entering its start node, including those carried by dummy arrows — and the ACTIVIDAD-NODO network is drawn from them.",
+      "engine": "pm_mcp.engine.aoa.convert_arrow_network",
+      "sources": ["concepts_xlsx:xl/media/image16.png", "concepts_xlsx:xl/media/image17.png", "concepts_xlsx:xl/media/image18.png", "exercise_docx:word/media/image2.png"]
+    },
+    "crash_slope": {
+      "topics": ["crashing"],
+      "formula": "(Cc - Cn) / (Dn - Dc)",
+      "statement": "Direct-cost increase per time unit of reduction; an activity with Dn = Dc has no slope (cannot be shortened).",
+      "engine": "pm_mcp.engine.crashing.calculate_crashing_schedule",
+      "sources": ["concepts_xlsx:xl/media/image30.png", "concepts_xlsx:xl/media/image31.png", "concepts_xlsx:xl/media/image35.png", "concepts_xlsx:xl/media/image46.png"]
+    },
+    "crashing_procedure": {
+      "topics": ["crashing", "cpm"],
+      "statement": "Compute the critical path and normal direct cost; shorten, one time unit at a time, the critical activity with the smallest slope; recompute (the critical path may change); with several critical paths shorten all of them simultaneously using the cheapest combination (an activity shared by the paths can be cheaper than one activity per path); stop when a critical path has all its activities at minimum duration or the owner's required time is reached.",
+      "engine": "pm_mcp.engine.crashing.calculate_crashing_schedule",
+      "sources": ["concepts_xlsx:xl/media/image33.png", "concepts_xlsx:xl/media/image34.png", "concepts_xlsx:xl/media/image40.png", "concepts_xlsx:xl/media/image48.png", "concepts_xlsx:xl/media/image50.png"]
+    },
+    "total_cost_optimum": {
+      "topics": ["crashing"],
+      "statement": "Total cost per duration = direct + indirect cost; the recommended duration is the one with minimum total cost.",
+      "engine": "pm_mcp.engine.crashing.calculate_crashing_schedule",
+      "sources": ["concepts_xlsx:xl/media/image32.png", "concepts_xlsx:xl/media/image51.png", "concepts_xlsx:xl/media/image52.png"]
+    }
+  },
+  "items": [
+    {"key": "exercise_docx:word/media/image1.png", "category": "formula", "topics": ["pert", "probability"], "summary": "Symbol σ, left-hand side of the deviation formula σ = √(Σ A.C.)."},
+    {"key": "exercise_docx:word/media/image2.png", "category": "problem_statement", "topics": ["network"], "summary": "Activity-on-arrow figure: numbered event nodes, lettered activity arrows and two dashed 'Ficticia' dummy arrows."},
+    {"key": "exercise_docx:word/media/image3.png", "category": "problem_statement", "topics": ["pert"], "summary": "Table Actividad / Optimista / Normal / Pesimista (a, m, b) in weeks for every activity."},
+    {"key": "exercise_docx:word/media/image4.png", "category": "formula", "topics": ["pert"], "summary": "t_e = (a + b + 4m) / 6."},
+    {"key": "exercise_docx:word/media/image5.png", "category": "formula", "topics": ["pert"], "summary": "σ² = [(b − a) / 6]²."},
+    {"key": "exercise_docx:word/media/image6.png", "category": "formula", "topics": ["pert", "probability"], "summary": "σ² = Σ (followed by text 'Actividades críticas')."},
+    {"key": "exercise_docx:word/media/image7.png", "category": "formula", "topics": ["pert", "probability"], "summary": "√(Σ A.C.) — square root of the sum over critical activities."},
+    {"key": "exercise_docx:word/media/image8.png", "category": "formula", "topics": ["probability"], "summary": "Standardization Z = (Tiempo predeterminado − Tiempo esperado mínimo del proyecto) / desviación estándar; abbreviated Z = (T_p − t_e)/σ."},
+
+    {"key": "concepts_xlsx:xl/media/image1.png", "category": "gantt_convention", "topics": ["gantt", "cpm", "network"], "summary": "Screenshot of a textbook page: slack definition, HOLGURA = IL − IC and = TL − TC banners, one-activity Gantt showing the four times, start of 'Representación del proyecto mediante una red' (ACTIVIDAD-NODO, Bernard Roy)."},
+    {"key": "concepts_xlsx:xl/media/image2.png", "category": "worked_example", "topics": ["gantt", "cpm", "network"], "summary": "Six-activity deterministic problem (precedences, weeks) asking for Gantt chart, project network, early/late times and slack, and the maximum delay of one activity."},
+    {"key": "concepts_xlsx:xl/media/image3.png", "category": "gantt_convention", "topics": ["gantt"], "summary": "Gantt grid with activities in rows, weeks 1..14 in columns and early-start bars; empty Observaciones column."},
+    {"key": "concepts_xlsx:xl/media/image4.png", "category": "gantt_convention", "topics": ["gantt", "cpm"], "summary": "Explanation of the second (latest) row of bars; Gantt with two bars per activity and Observaciones 'Actividad Crítica' (shaded) / 'Holgura de 2 semanas'; critical activities explanation."},
+    {"key": "concepts_xlsx:xl/media/image5.png", "category": "gantt_convention", "topics": ["gantt", "cpm"], "summary": "HOLGURA = TL − TC banner and single-activity Gantt annotating the four times and 'Holgura de 2 semanas 7−5=2 ó 11−9=2'."},
+    {"key": "concepts_xlsx:xl/media/image6.png", "category": "gantt_convention", "topics": ["gantt"], "summary": "'Solución a) Diagrama Gantt': double-entry table, activities in rows, time in columns, two rows per activity, first row bars as early as possible respecting precedence."},
+    {"key": "concepts_xlsx:xl/media/image7.png", "category": "conceptual_explanation", "topics": ["gantt"], "summary": "Sentence fragment continuing the Gantt explanation ('…tividad, lo más pronto posible.')."},
+    {"key": "concepts_xlsx:xl/media/image8.png", "category": "worked_example", "topics": ["cpm", "network"], "summary": "Precedence / estimated time table of the six-activity example."},
+    {"key": "concepts_xlsx:xl/media/image9.png", "category": "gantt_convention", "topics": ["gantt"], "summary": "Completed Gantt with early and late bars and Observaciones column."},
+    {"key": "concepts_xlsx:xl/media/image10.png", "category": "conceptual_explanation", "topics": ["cpm", "gantt"], "summary": "Cost of delays; activities with slack can be delayed; definitions of the four significant times."},
+    {"key": "concepts_xlsx:xl/media/image11.png", "category": "conceptual_explanation", "topics": ["cpm", "gantt"], "summary": "HOLGURA definition: maximum delay without altering the minimum duration; LS − ES or LF − EF."},
+    {"key": "concepts_xlsx:xl/media/image12.png", "category": "formula", "topics": ["cpm"], "summary": "Banner HOLGURA = TIEMPO DE INICIO MÁS TARDE − TIEMPO DE INICIO MÁS TEMPRANO."},
+    {"key": "concepts_xlsx:xl/media/image13.png", "category": "decorative", "topics": [], "summary": "Left-pointing arrow icon."},
+    {"key": "concepts_xlsx:xl/media/image14.png", "category": "network_convention", "topics": ["network", "cpm"], "summary": "ACTIVIDAD-NODO representation text, six-cell node symbol legend and solved AON network of the six-activity example (critical nodes shaded, double arrows)."},
+    {"key": "concepts_xlsx:xl/media/image15.png", "category": "pert_material", "topics": ["pert"], "summary": "PERT probabilístico: beta unimodal distribution with a (optimistic), m (most likely), b (pessimistic); t_e and σ² formulas; Ejemplo 4.2 statement parts a)–c)."},
+    {"key": "concepts_xlsx:xl/media/image16.png", "category": "worked_example", "topics": ["pert", "network", "probability"], "summary": "Ejemplo 4.2 parts d)–f) (critical path, probabilities for several durations, duration for 90 %), activity-on-arrow figure with one 'Actividad Ficticia', and a_i / m_i / b_i table."},
+    {"key": "concepts_xlsx:xl/media/image17.png", "category": "conceptual_explanation", "topics": ["network", "pert"], "summary": "Solution intro: precedences are read from the ACTIVIDAD-FLECHA network given in the statement before drawing ACTIVIDAD-NODO."},
+    {"key": "concepts_xlsx:xl/media/image18.png", "category": "worked_example", "topics": ["pert"], "summary": "Table with predecessors, a_i, b_i, m_i (note column order a, b, m) and worked t_e and σ² per activity."},
+    {"key": "concepts_xlsx:xl/media/image19.png", "category": "worked_example", "topics": ["pert", "network", "cpm"], "summary": "AON network with expected times, critical path and statement that project variance is the sum over the critical path."},
+    {"key": "concepts_xlsx:xl/media/image20.png", "category": "worked_example", "topics": ["probability", "pert"], "summary": "Variance sum as fractions, standardization formula and three Z computations with Z rounded to two decimals and table probabilities."},
+    {"key": "concepts_xlsx:xl/media/image21.png", "category": "worked_example", "topics": ["probability"], "summary": "Probability statements for 'or less', 'more than' (complement) and 'between' (difference)."},
+    {"key": "concepts_xlsx:xl/media/image22.png", "category": "worked_example", "topics": ["probability"], "summary": "Target probability 0.90: Z = 1.29 from the cumulative normal table; required time 26.6089, rounded up to the next whole week."},
+    {"key": "concepts_xlsx:xl/media/image23.png", "category": "formula", "topics": ["probability"], "summary": "Algebra solving Z = (T_p − t_e)/σ for T_p."},
+    {"key": "concepts_xlsx:xl/media/image24.png", "category": "decorative", "topics": ["probability"], "summary": "Normal curve illustration, left area 94.52 %."},
+    {"key": "concepts_xlsx:xl/media/image25.png", "category": "decorative", "topics": ["probability"], "summary": "Normal curve illustration, left half 50 %."},
+    {"key": "concepts_xlsx:xl/media/image26.png", "category": "decorative", "topics": ["probability"], "summary": "Normal curve illustration, left tail 5.48 %."},
+    {"key": "concepts_xlsx:xl/media/image27.png", "category": "decorative", "topics": ["probability"], "summary": "Normal curve illustration, area between mean and a bound 44.52 %."},
+    {"key": "concepts_xlsx:xl/media/image28.png", "category": "decorative", "topics": ["probability"], "summary": "Normal curve illustration, right tail 5.48 %."},
+    {"key": "concepts_xlsx:xl/media/image29.png", "category": "decorative", "topics": ["cpm"], "summary": "Title banner 'MÉTODO DE LA RUTA CRÍTICA, CPM'."},
+    {"key": "concepts_xlsx:xl/media/image30.png", "category": "cpm_material", "topics": ["cpm", "crashing"], "summary": "CPM characteristics (deterministic times, time and cost equally important) and direct-cost notation Cc, Cn, Dc, Dn."},
+    {"key": "concepts_xlsx:xl/media/image31.png", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost vs duration graph and slope = (Cc − Cn)/(Dn − Dc)."},
+    {"key": "concepts_xlsx:xl/media/image32.png", "category": "crashing_material", "topics": ["crashing"], "summary": "Indirect cost vs duration graph and total-cost curve with minimum-total-cost duration."},
+    {"key": "concepts_xlsx:xl/media/image33.png", "category": "crashing_material", "topics": ["crashing"], "summary": "Compression procedure steps 1, 2a–2c."},
+    {"key": "concepts_xlsx:xl/media/image34.png", "category": "crashing_material", "topics": ["crashing"], "summary": "Stopping rule of the compression procedure."},
+    {"key": "concepts_xlsx:xl/media/image35.png", "category": "worked_example", "topics": ["crashing"], "summary": "Crashing problem 1 statement (normal/minimum durations and costs), normal total cost and slope table."},
+    {"key": "concepts_xlsx:xl/media/image36.png", "category": "worked_example", "topics": ["crashing", "network"], "summary": "Problem 1 AON networks at normal duration and after the first reduction; note on two terminal nodes."},
+    {"key": "concepts_xlsx:xl/media/image37.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 next step: the cheapest activity reached its minimum, the next critical activity is reduced."},
+    {"key": "concepts_xlsx:xl/media/image38.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 steps reducing one week at a time; why an activity is not reduced in one jump (critical path may change)."},
+    {"key": "concepts_xlsx:xl/media/image39.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 intermediate step network."},
+    {"key": "concepts_xlsx:xl/media/image40.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 final steps: two independent critical paths reduced simultaneously; maximum compression reached; conclusion."},
+    {"key": "concepts_xlsx:xl/media/image41.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 slope table (duplicate)."},
+    {"key": "concepts_xlsx:xl/media/image42.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 1 data table (duplicate)."},
+    {"key": "concepts_xlsx:xl/media/image43.png", "category": "conceptual_explanation", "topics": ["crashing"], "summary": "Intro to a more complete example with indirect, direct and total costs."},
+    {"key": "concepts_xlsx:xl/media/image44.png", "category": "worked_example", "topics": ["crashing"], "summary": "Crashing problem 2 statement: activities with normal/critical times and costs; direct totals for several durations; total-cost optimum."},
+    {"key": "concepts_xlsx:xl/media/image45.png", "category": "worked_example", "topics": ["crashing"], "summary": "Indirect cost per project duration table."},
+    {"key": "concepts_xlsx:xl/media/image46.png", "category": "worked_example", "topics": ["crashing", "network"], "summary": "Problem 2 slopes (one activity without slope) and network with three initial and two terminal activities."},
+    {"key": "concepts_xlsx:xl/media/image47.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2 network at normal duration with critical path and first activity to reduce."},
+    {"key": "concepts_xlsx:xl/media/image48.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2: two critical paths sharing an activity; reducing the shared activity is cheaper than one activity per path."},
+    {"key": "concepts_xlsx:xl/media/image49.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2: shared activity at minimum; one activity per critical path is reduced."},
+    {"key": "concepts_xlsx:xl/media/image50.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2: only one reducible activity remains on each critical path."},
+    {"key": "concepts_xlsx:xl/media/image51.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2 final network and summary table of indirect, direct and total costs with the minimum-total-cost duration."},
+    {"key": "concepts_xlsx:xl/media/image52.png", "category": "decorative", "topics": ["crashing"], "summary": "Total/indirect/direct cost curves annotated with the optimum."},
+    {"key": "concepts_xlsx:xl/media/image53.png", "category": "worked_example", "topics": ["crashing"], "summary": "Problem 2 data table (duplicate)."}
+  ],
+  "cells": [
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B2", "category": "conceptual_explanation", "topics": ["gantt", "pert", "cpm"], "summary": "Title: project administration Gantt - PERT - CPM."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B4", "category": "conceptual_explanation", "topics": ["gantt", "pert", "cpm"], "summary": "Introduction: basic tools are the Gantt chart, probabilistic PERT and CPM."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I3", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost examples (I3:I8): raw material, labour, transport, commissions, advertising."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!K4", "category": "crashing_material", "topics": ["crashing"], "summary": "Indirect cost examples (K4:K7): energy, indirect labour, administrative staff."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B10", "category": "conceptual_explanation", "topics": ["pert", "cpm", "probability"], "summary": "Main uses (B10:B16): minimum project duration, probability of finishing by a predetermined time, bottleneck/critical activities."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B21", "category": "conceptual_explanation", "topics": ["network", "gantt"], "summary": "First step is representing the project as a network; the Gantt chart helps identify the times."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B28", "category": "network_convention", "topics": ["network"], "summary": "ACTIVIDAD-RAMAL vs ACTIVIDAD-NODO; the material uses ACTIVIDAD-NODO for easier representation of activities and precedences."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I4", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost example: raw material."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I5", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost example: labour."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I6", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost example: transport."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I7", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost example: commissions."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!I8", "category": "crashing_material", "topics": ["crashing"], "summary": "Direct cost example: advertising campaigns."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!K5", "category": "crashing_material", "topics": ["crashing"], "summary": "Indirect cost example: company energy consumption."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!K6", "category": "crashing_material", "topics": ["crashing"], "summary": "Indirect cost example: indirect labour shared across products."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!K7", "category": "crashing_material", "topics": ["crashing"], "summary": "Indirect cost example: administrative staff."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B11", "category": "conceptual_explanation", "topics": ["cpm", "pert"], "summary": "Use 1: determine the minimum project duration."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B12", "category": "conceptual_explanation", "topics": ["probability"], "summary": "Use: probability of finishing within a predetermined time."},
+    {"key": "concepts_xlsx:Diagrama Gantt (2)!B16", "category": "conceptual_explanation", "topics": ["cpm"], "summary": "Use 2: identify bottleneck activities forming the critical path and why they matter to the decision maker."},
+    {"key": "concepts_xlsx:CPM!T2", "category": "worked_example", "topics": ["crashing"], "summary": "Label 'PROBLEMA 1'."},
+    {"key": "concepts_xlsx:Problema 2 CPM!A6", "category": "worked_example", "topics": ["crashing"], "summary": "Label 'PROBLEMA 2'."}
+  ],
+  "exercise_question_shapes": [
+    {"shape": "Gantt chart", "output": "GANTT"},
+    {"shape": "Early/late start/finish and slack per activity", "output": ["EARLY_LATE_TIMES", "SLACK"]},
+    {"shape": "Minimum expected project time, its variance and critical activities", "output": ["EXPECTED_DURATION", "VARIANCE", "CRITICAL_PATH"]},
+    {"shape": "Probability of finishing in x or less", "output": "PROBABILITY_QUERY", "kind": "AT_MOST"},
+    {"shape": "Probability of finishing in x or more", "output": "PROBABILITY_QUERY", "kind": "AT_LEAST"},
+    {"shape": "Probability of finishing between x1 and x2", "output": "PROBABILITY_QUERY", "kind": "BETWEEN"},
+    {"shape": "Contract duration for a p % completion probability", "output": "PERCENTILE_DURATION", "kind": "PERCENTILE_TO_DURATION"},
+    {"shape": "Maximum delay of an activity without delaying the project", "output": "ACTIVITY_MAX_DELAY"},
+    {"shape": "Shorten the project at minimum direct / total cost", "output": "CRASHING"}
+  ]
+}

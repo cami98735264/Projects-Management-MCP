@@ -1,0 +1,344 @@
+{
+  "metadata": {
+    "title": "Ejemplo 4.2 — PERT probabilístico (material de referencia)",
+    "source_description": "CONCEPTOS GENERALES — hoja PERT Probabilístico"
+  },
+  "activities": [
+    {
+      "id": "A",
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha A sale del nodo 1, al que no llega ninguna actividad: actividad inicial."
+      ]
+    },
+    {
+      "id": "B",
+      "predecessors": [
+        "A"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha B sale del nodo 2; llegan al nodo 2: A."
+      ]
+    },
+    {
+      "id": "C",
+      "predecessors": [
+        "B"
+      ],
+      "optimistic_duration": 4,
+      "most_likely_duration": 5,
+      "pessimistic_duration": 6,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha C sale del nodo 3; llegan al nodo 3: B."
+      ]
+    },
+    {
+      "id": "D",
+      "predecessors": [
+        "B"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 4,
+      "pessimistic_duration": 7,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha D sale del nodo 3; llegan al nodo 3: B."
+      ]
+    },
+    {
+      "id": "E",
+      "predecessors": [
+        "A"
+      ],
+      "optimistic_duration": 7,
+      "most_likely_duration": 8,
+      "pessimistic_duration": 9,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha E sale del nodo 2; llegan al nodo 2: A."
+      ]
+    },
+    {
+      "id": "F",
+      "predecessors": [
+        "D",
+        "E"
+      ],
+      "optimistic_duration": 4,
+      "most_likely_duration": 6,
+      "pessimistic_duration": 8,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha F sale del nodo 5; llegan al nodo 5: D; por la(s) ficticia(s) ficticia_4_5 también depende de E."
+      ]
+    },
+    {
+      "id": "G",
+      "predecessors": [
+        "C",
+        "F"
+      ],
+      "optimistic_duration": 4,
+      "most_likely_duration": 5,
+      "pessimistic_duration": 6,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha G sale del nodo 6; llegan al nodo 6: C, F."
+      ]
+    },
+    {
+      "id": "H",
+      "predecessors": [
+        "E"
+      ],
+      "optimistic_duration": 7,
+      "most_likely_duration": 9,
+      "pessimistic_duration": 11,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha H sale del nodo 4; llegan al nodo 4: E."
+      ]
+    },
+    {
+      "id": "I",
+      "predecessors": [
+        "G",
+        "H"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha I sale del nodo 7; llegan al nodo 7: G, H."
+      ]
+    }
+  ],
+  "probability_queries": [
+    {
+      "id": "e1",
+      "kind": "AT_MOST",
+      "upper_bound": 27,
+      "provenance": "inferred",
+      "source_text": "encuentre la probabilidad de que las actividades de la ruta critica concluyan dentro de 27 semanas"
+    },
+    {
+      "id": "e2",
+      "kind": "AT_MOST",
+      "upper_bound": 25,
+      "provenance": "inferred",
+      "source_text": "dentro de 25 semanas"
+    },
+    {
+      "id": "e3",
+      "kind": "AT_MOST",
+      "upper_bound": 23,
+      "provenance": "inferred",
+      "source_text": "dentro de 23 semanas"
+    },
+    {
+      "id": "e4",
+      "kind": "AT_LEAST",
+      "lower_bound": 27,
+      "provenance": "inferred",
+      "source_text": ", en mas de 27 semanas"
+    },
+    {
+      "id": "e5",
+      "kind": "BETWEEN",
+      "lower_bound": 25,
+      "upper_bound": 27,
+      "provenance": "inferred",
+      "source_text": "entre 25 y 27 semanas."
+    },
+    {
+      "id": "f",
+      "kind": "PERCENTILE_TO_DURATION",
+      "target_probability": 0.9,
+      "provenance": "inferred",
+      "source_text": "¿Cuántas semanas permitirá una probabilidad del 90%, para concluir la ruta crítica a tiempo?"
+    }
+  ],
+  "questions": [
+    {
+      "label": "a",
+      "text": "Represente el proyecto mediante una red ACTIVIDAD - NODO",
+      "outputs": [
+        "NETWORK_DIAGRAM"
+      ]
+    },
+    {
+      "label": "b",
+      "text": "Calcule el tiempo esperado y la varianza de cada actividad, suponiendo una distribución beta unimodal de probabilidad.",
+      "outputs": [
+        "ACTIVITY_ESTIMATES"
+      ]
+    },
+    {
+      "label": "c",
+      "text": "Calcule el tiempo de inicio esperado más temprano, el tiempo de inicio esperado más tarde, el tiempo de finalización esperado más temprano, el tiempo de finalización esperado más tarde y la holgura esperada, para cada una de las actividades del proyecto.",
+      "outputs": [
+        "EARLY_LATE_TIMES",
+        "SLACK"
+      ]
+    },
+    {
+      "label": "d",
+      "text": "Especifique la ruta crítica, el tiempo esperado de conclusión del proyecto y su varianza esperada.",
+      "outputs": [
+        "CRITICAL_PATH",
+        "EXPECTED_DURATION",
+        "VARIANCE"
+      ]
+    },
+    {
+      "label": "e",
+      "text": "Encuentre la probabilidad de que las actividades de la ruta crítica concluyan dentro de 27 semanas; dentro de 25 semanas; dentro de 23 semanas;, en más de 27 semanas; entre 25 y 27 semanas.",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ],
+      "probability_query_ids": [
+        "e1",
+        "e2",
+        "e3",
+        "e4",
+        "e5"
+      ]
+    },
+    {
+      "label": "f",
+      "text": "¿Cuántas semanas permitirá una probabilidad del 90%, para concluir la ruta crítica a tiempo?",
+      "outputs": [
+        "PERCENTILE_DURATION"
+      ],
+      "probability_query_ids": [
+        "f"
+      ]
+    }
+  ],
+  "arrow_network_trace": [
+    {
+      "activity_id": "A",
+      "tail_node": "1",
+      "head_node": "2",
+      "predecessors": [],
+      "justification": "La flecha A sale del nodo 1, al que no llega ninguna actividad: actividad inicial."
+    },
+    {
+      "activity_id": "B",
+      "tail_node": "2",
+      "head_node": "3",
+      "predecessors": [
+        "A"
+      ],
+      "justification": "La flecha B sale del nodo 2; llegan al nodo 2: A."
+    },
+    {
+      "activity_id": "C",
+      "tail_node": "3",
+      "head_node": "6",
+      "predecessors": [
+        "B"
+      ],
+      "justification": "La flecha C sale del nodo 3; llegan al nodo 3: B."
+    },
+    {
+      "activity_id": "D",
+      "tail_node": "3",
+      "head_node": "5",
+      "predecessors": [
+        "B"
+      ],
+      "justification": "La flecha D sale del nodo 3; llegan al nodo 3: B."
+    },
+    {
+      "activity_id": "E",
+      "tail_node": "2",
+      "head_node": "4",
+      "predecessors": [
+        "A"
+      ],
+      "justification": "La flecha E sale del nodo 2; llegan al nodo 2: A."
+    },
+    {
+      "activity_id": "F",
+      "tail_node": "5",
+      "head_node": "6",
+      "predecessors": [
+        "D",
+        "E"
+      ],
+      "via_dummies": [
+        "ficticia_4_5"
+      ],
+      "justification": "La flecha F sale del nodo 5; llegan al nodo 5: D; por la(s) ficticia(s) ficticia_4_5 también depende de E."
+    },
+    {
+      "activity_id": "G",
+      "tail_node": "6",
+      "head_node": "7",
+      "predecessors": [
+        "C",
+        "F"
+      ],
+      "justification": "La flecha G sale del nodo 6; llegan al nodo 6: C, F."
+    },
+    {
+      "activity_id": "H",
+      "tail_node": "4",
+      "head_node": "7",
+      "predecessors": [
+        "E"
+      ],
+      "justification": "La flecha H sale del nodo 4; llegan al nodo 4: E."
+    },
+    {
+      "activity_id": "I",
+      "tail_node": "7",
+      "head_node": "8",
+      "predecessors": [
+        "G",
+        "H"
+      ],
+      "justification": "La flecha I sale del nodo 7; llegan al nodo 7: G, H."
+    }
+  ],
+  "options": {
+    "probability_method": "table"
+  }
+}

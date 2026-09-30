@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "pm-scheduling": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "-m",
+        "pm_mcp.server"
+      ],
+      "env": {
+        "PM_MCP_OUTPUT_DIR": "C:/Users/Administrador_R/Desktop/administracion-de-proyectos-mcp/output"
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "description": "Raw inputs transcribed from the reference workbook's crashing problems (sheets 'CPM' and 'Problema 2 CPM'). Results are asserted in the tests with hand derivations.",
+  "problem_1": {
+    "source_images": {"xl/media/image35.png": "930e176495749d2801b87055beca1b754470d93ca91e83a9f6d4dd5d93e2a649"},
+    "activities": [
+      {"id": "A", "predecessors": [], "duration": 8, "normal_cost": 100, "crash_duration": 6, "crash_cost": 200},
+      {"id": "B", "predecessors": [], "duration": 4, "normal_cost": 150, "crash_duration": 2, "crash_cost": 350},
+      {"id": "C", "predecessors": ["A"], "duration": 2, "normal_cost": 50, "crash_duration": 1, "crash_cost": 90},
+      {"id": "D", "predecessors": ["A"], "duration": 10, "normal_cost": 100, "crash_duration": 5, "crash_cost": 400},
+      {"id": "E", "predecessors": ["B"], "duration": 5, "normal_cost": 100, "crash_duration": 1, "crash_cost": 200},
+      {"id": "F", "predecessors": ["C", "E"], "duration": 3, "normal_cost": 80, "crash_duration": 1, "crash_cost": 100}
+    ]
+  },
+  "problem_2": {
+    "source_images": {
+      "xl/media/image44.png": "c8e9106ff64e12b1caf8f25e7d82421652a62a681fc3402e9afc35c26c9f9d15",
+      "xl/media/image45.png": "e4bb03832d80e39b1602e4aca8b212c4e4299b8cb337f94a1bec377b53826be9"
+    },
+    "activities": [
+      {"id": "A", "predecessors": [], "duration": 2, "normal_cost": 500, "crash_duration": 1, "crash_cost": 800},
+      {"id": "B", "predecessors": [], "duration": 5, "normal_cost": 900, "crash_duration": 3, "crash_cost": 1300},
+      {"id": "C", "predecessors": [], "duration": 4, "normal_cost": 800, "crash_duration": 3, "crash_cost": 1000},
+      {"id": "D", "predecessors": ["A"], "duration": 1, "normal_cost": 400, "crash_duration": 1, "crash_cost": 400},
+      {"id": "E", "predecessors": ["C"], "duration": 3, "normal_cost": 1200, "crash_duration": 2, "crash_cost": 1800},
+      {"id": "F", "predecessors": ["B", "D", "E"], "duration": 6, "normal_cost": 700, "crash_duration": 4, "crash_cost": 900},
+      {"id": "G", "predecessors": ["C"], "duration": 8, "normal_cost": 600, "crash_duration": 4, "crash_cost": 1200}
+    ],
+    "indirect_costs": [
+      {"duration": 9, "cost": 6000},
+      {"duration": 10, "cost": 6150},
+      {"duration": 11, "cost": 6200},
+      {"duration": 12, "cost": 6500},
+      {"duration": 13, "cost": 7100}
+    ]
+  },
+  "gantt_problem": {
+    "source_images": {"xl/media/image2.png": "21e0c189981f885e6ec04ff6dc2e8638513724acb27d42b8b99b6afea0909f2f"},
+    "question_text": "a) Construya un diagrama Gantt.\nb) Construya la red del proyecto.\nc) Encuentre el tiempo de inicio más pronto, el tiempo de inicio más tarde, el tiempo de finalización más temprano, el tiempo de finalización más tarde y el tiempo de holgura, para cada una de las actividades del proyecto.\nd) Si todas las demás actividades se llevan el tiempo estimado, ¿Cuál es el tiempo máximo que puede atrasarse la actividad D, sin retrasar la terminación del proyecto?",
+    "activities": [
+      {"id": "A", "predecessors": [], "duration": 5},
+      {"id": "B", "predecessors": [], "duration": 1},
+      {"id": "C", "predecessors": ["B"], "duration": 2},
+      {"id": "D", "predecessors": ["A", "C"], "duration": 4},
+      {"id": "E", "predecessors": ["A", "C"], "duration": 6},
+      {"id": "F", "predecessors": ["D", "E"], "duration": 3}
+    ]
+  }
+}

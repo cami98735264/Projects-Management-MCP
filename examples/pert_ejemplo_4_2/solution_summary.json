@@ -1,0 +1,181 @@
+{
+  "ok": true,
+  "sheets": [
+    "Enunciado",
+    "Datos",
+    "PERT",
+    "CPM",
+    "Red AON",
+    "Probabilidad",
+    "Resultados"
+  ],
+  "answers": [
+    {
+      "label": "a",
+      "question": "Represente el proyecto mediante una red ACTIVIDAD - NODO",
+      "answer": "Red actividad-nodo en la hoja 'Red AON' con la simbología de nodo de seis casillas.",
+      "outputs": [
+        "NETWORK_DIAGRAM"
+      ]
+    },
+    {
+      "label": "b",
+      "question": "Calcule el tiempo esperado y la varianza de cada actividad, suponiendo una distribución beta unimodal de probabilidad.",
+      "answer": "(hoja 'PERT') A: t_e = 3, σ² = 4/9; B: t_e = 3, σ² = 4/9; C: t_e = 5, σ² = 1/9; D: t_e = 4, σ² = 1; E: t_e = 8, σ² = 1/9; F: t_e = 6, σ² = 4/9; G: t_e = 5, σ² = 1/9; H: t_e = 9, σ² = 4/9; I: t_e = 3, σ² = 4/9.",
+      "outputs": [
+        "ACTIVITY_ESTIMATES"
+      ]
+    },
+    {
+      "label": "c",
+      "question": "Calcule el tiempo de inicio esperado más temprano, el tiempo de inicio esperado más tarde, el tiempo de finalización esperado más temprano, el tiempo de finalización esperado más tarde y la holgura esperada, para cada una de las actividades del proyecto.",
+      "answer": "(hoja 'CPM') A: IC 0, TC 3, IL 0, TL 3, holgura 0; B: IC 3, TC 6, IL 4, TL 7, holgura 1; C: IC 6, TC 11, IL 12, TL 17, holgura 6; D: IC 6, TC 10, IL 7, TL 11, holgura 1; E: IC 3, TC 11, IL 3, TL 11, holgura 0; F: IC 11, TC 17, IL 11, TL 17, holgura 0; G: IC 17, TC 22, IL 17, TL 22, holgura 0; H: IC 11, TC 20, IL 13, TL 22, holgura 2; I: IC 22, TC 25, IL 22, TL 25, holgura 0.",
+      "outputs": [
+        "EARLY_LATE_TIMES",
+        "SLACK"
+      ]
+    },
+    {
+      "label": "d",
+      "question": "Especifique la ruta crítica, el tiempo esperado de conclusión del proyecto y su varianza esperada.",
+      "answer": "Ruta crítica: A – E – F – G – I. Tiempo esperado mínimo del proyecto (t_e): 25 semanas. Varianza del proyecto: σ² = 4/9 + 1/9 + 4/9 + 1/9 + 4/9 = 14/9 ≈ 1.5556; desviación estándar σ = √(14/9) = 1.2472.",
+      "outputs": [
+        "CRITICAL_PATH",
+        "EXPECTED_DURATION",
+        "VARIANCE"
+      ]
+    },
+    {
+      "label": "e",
+      "question": "Encuentre la probabilidad de que las actividades de la ruta crítica concluyan dentro de 27 semanas; dentro de 25 semanas; dentro de 23 semanas;, en más de 27 semanas; entre 25 y 27 semanas.",
+      "answer": "P(T ≤ 27) = 0.9452 (Z = 1.6036; exacta: 0.9456); P(T ≤ 25) = 0.5000 (Z = 0; exacta: 0.5000); P(T ≤ 23) = 0.0548 (Z = -1.6036; exacta: 0.0544); P(T ≥ 27) = 0.0548 (Z = 1.6036; exacta: 0.0544); P(25 ≤ T ≤ 27) = 0.4452 (Z = 1.6036, Z = 0; exacta: 0.4456).",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ]
+    },
+    {
+      "label": "f",
+      "question": "¿Cuántas semanas permitirá una probabilidad del 90%, para concluir la ruta crítica a tiempo?",
+      "answer": "Para 90 %: Z = 1.2816 → T = 26.5984; con tabla Z = 1.29 → T = 26.6089; duración a especificar: 27 semanas.",
+      "outputs": [
+        "PERCENTILE_DURATION"
+      ]
+    }
+  ],
+  "calculation_checks": [
+    [
+      "network arcs match the activity predecessor lists",
+      true
+    ],
+    [
+      "PERT t_e = a/6 + 2m/3 + b/6 and σ² = (b−a)²/36",
+      true
+    ],
+    [
+      "schedule: durations match their source",
+      true
+    ],
+    [
+      "schedule: EF−ES = LF−LS = duration and LS−ES = LF−EF",
+      true
+    ],
+    [
+      "schedule: every precedence respected",
+      true
+    ],
+    [
+      "schedule: project duration = longest path (independent relaxation)",
+      true
+    ],
+    [
+      "schedule: each critical path sums to the project duration",
+      true
+    ],
+    [
+      "project variance re-summed from the raw estimates",
+      true
+    ],
+    [
+      "probabilities re-derived by numerical integration of the normal pdf",
+      true
+    ],
+    [
+      "percentile durations re-derived (Φ(Z) round-trip, table rule)",
+      true
+    ],
+    [
+      "Gantt bars match ES→EF / LS→LF and critical flags",
+      true
+    ]
+  ],
+  "workbook_validation": {
+    "passed": true,
+    "formula_count": 237,
+    "evaluated_formula_count": 237,
+    "expected_values_checked": 237,
+    "conditional_format_rules": 11
+  },
+  "inferences": [
+    {
+      "field_path": "requested_outputs",
+      "value": "NETWORK_DIAGRAM",
+      "justification": "Question 'a' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "ACTIVITY_ESTIMATES",
+      "justification": "Question 'b' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "EARLY_LATE_TIMES",
+      "justification": "Question 'c' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "SLACK",
+      "justification": "Question 'c' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "CRITICAL_PATH",
+      "justification": "Question 'd' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "EXPECTED_DURATION",
+      "justification": "Question 'd' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "VARIANCE",
+      "justification": "Question 'd' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "PROBABILITY_QUERY",
+      "justification": "Question 'e' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "PERCENTILE_DURATION",
+      "justification": "Question 'f' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "calculation_method",
+      "value": "PERT",
+      "justification": "Every activity has optimistic, most likely and pessimistic durations.",
+      "provenance": "inferred"
+    }
+  ],
+  "warnings": []
+}

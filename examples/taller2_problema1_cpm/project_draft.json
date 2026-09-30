@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "title": "Taller 2 - Problema 1 - CPM Constructora Pijao",
+    "time_unit": {
+      "code": "week"
+    },
+    "source_description": "TALLER 2.docx.md - Problema 1, red de flechas nodos 1-6 y tabla tiempo/costo normal y limite",
+    "language": "es"
+  },
+  "activities": [
+    {
+      "id": "A",
+      "predecessors": [],
+      "duration": 5,
+      "crash": {
+        "crash_duration": 3,
+        "normal_cost": 10000,
+        "crash_cost": 14000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "B",
+      "predecessors": [],
+      "duration": 10,
+      "crash": {
+        "crash_duration": 7,
+        "normal_cost": 18000,
+        "crash_cost": 24000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "C",
+      "predecessors": ["A"],
+      "duration": 11,
+      "crash": {
+        "crash_duration": 8,
+        "normal_cost": 15000,
+        "crash_cost": 18000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "D",
+      "predecessors": ["B"],
+      "duration": 6,
+      "crash": {
+        "crash_duration": 5,
+        "normal_cost": 5000,
+        "crash_cost": 6500,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "E",
+      "predecessors": ["B"],
+      "duration": 8,
+      "crash": {
+        "crash_duration": 4,
+        "normal_cost": 3000,
+        "crash_cost": 7000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "F",
+      "predecessors": ["D"],
+      "duration": 9,
+      "crash": {
+        "crash_duration": 8,
+        "normal_cost": 12000,
+        "crash_cost": 15000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    },
+    {
+      "id": "G",
+      "predecessors": ["C", "E"],
+      "duration": 12,
+      "crash": {
+        "crash_duration": 8,
+        "normal_cost": 6000,
+        "crash_cost": 9000,
+        "provenance": "document_extracted"
+      },
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      }
+    }
+  ],
+  "calculation_method": "CPM",
+  "requested_outputs": [
+    "GANTT",
+    "NETWORK_DIAGRAM",
+    "EARLY_LATE_TIMES",
+    "SLACK",
+    "CRITICAL_PATH",
+    "CRASHING"
+  ],
+  "crashing": {
+    "target_duration": 25,
+    "indirect_costs": [
+      { "duration": 25, "cost": 0 },
+      { "duration": 26, "cost": 1000 },
+      { "duration": 27, "cost": 2000 },
+      { "duration": 28, "cost": 3000 },
+      { "duration": 29, "cost": 4000 },
+      { "duration": 30, "cost": 5000 }
+    ],
+    "step": 1
+  },
+  "questions": [
+    {
+      "label": "a",
+      "text": "¿Cuál es la duración normal del proyecto y su costo?",
+      "outputs": ["CRITICAL_PATH", "EARLY_LATE_TIMES", "SLACK"]
+    },
+    {
+      "label": "b",
+      "text": "El departamento del Tolima aconsejó a la constructora Pijao que se programe el proyecto para terminarlo en 25 semanas; por cada semana de retraso habrá una penalización de $1.000 cargados al contratista. ¿Qué duración del proyecto debe planear la constructora Pijao?",
+      "outputs": ["CRASHING"]
+    }
+  ],
+  "assumptions": [
+    {
+      "field_path": "crashing.indirect_costs",
+      "value": "penalización = $1.000 x (duración - 25) para duraciones mayores a 25 semanas; 0 para 25 semanas",
+      "justification": "El enunciado define una multa de $1.000 por cada semana de retraso respecto a las 25 semanas; se modela como costo indirecto por duración para comparar el costo total.",
+      "provenance": "inferred"
+    }
+  ],
+  "options": {
+    "probability_method": "exact",
+    "variance_strategy": "max_variance_path"
+  }
+}

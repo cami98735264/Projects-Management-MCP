@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "title": "Compresión CPM — Problema 2",
+    "source_description": "CONCEPTOS GENERALES — hoja Problema 2 CPM"
+  },
+  "activities": [
+    {
+      "id": "A",
+      "duration": 2,
+      "crash": {
+        "crash_duration": 1,
+        "normal_cost": 500,
+        "crash_cost": 800
+      }
+    },
+    {
+      "id": "B",
+      "duration": 5,
+      "crash": {
+        "crash_duration": 3,
+        "normal_cost": 900,
+        "crash_cost": 1300
+      }
+    },
+    {
+      "id": "C",
+      "duration": 4,
+      "crash": {
+        "crash_duration": 3,
+        "normal_cost": 800,
+        "crash_cost": 1000
+      }
+    },
+    {
+      "id": "D",
+      "predecessors": [
+        "A"
+      ],
+      "duration": 1,
+      "crash": {
+        "crash_duration": 1,
+        "normal_cost": 400,
+        "crash_cost": 400
+      }
+    },
+    {
+      "id": "E",
+      "predecessors": [
+        "C"
+      ],
+      "duration": 3,
+      "crash": {
+        "crash_duration": 2,
+        "normal_cost": 1200,
+        "crash_cost": 1800
+      }
+    },
+    {
+      "id": "F",
+      "predecessors": [
+        "B",
+        "D",
+        "E"
+      ],
+      "duration": 6,
+      "crash": {
+        "crash_duration": 4,
+        "normal_cost": 700,
+        "crash_cost": 900
+      }
+    },
+    {
+      "id": "G",
+      "predecessors": [
+        "C"
+      ],
+      "duration": 8,
+      "crash": {
+        "crash_duration": 4,
+        "normal_cost": 600,
+        "crash_cost": 1200
+      }
+    }
+  ],
+  "requested_outputs": [
+    "CRITICAL_PATH",
+    "NETWORK_DIAGRAM",
+    "CRASHING"
+  ],
+  "crashing": {
+    "indirect_costs": [
+      {
+        "duration": 9,
+        "cost": 6000
+      },
+      {
+        "duration": 10,
+        "cost": 6150
+      },
+      {
+        "duration": 11,
+        "cost": 6200
+      },
+      {
+        "duration": 12,
+        "cost": 6500
+      },
+      {
+        "duration": 13,
+        "cost": 7100
+      }
+    ]
+  }
+}

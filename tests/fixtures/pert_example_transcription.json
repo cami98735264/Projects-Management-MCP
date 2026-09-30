@@ -1,0 +1,20 @@
+{
+  "title": "Ejemplo 4.2 — PERT probabilístico (material de referencia)",
+  "description": "Visual transcription of the worked example in sheet 'PERT Probabilístico': question text (xl/media/image15.png, image16.png), activity-on-arrow figure and a_i/m_i/b_i table (xl/media/image16.png). Raw inputs only.",
+  "source_images": {
+    "xl/media/image16.png": "5b3862d0ca75bf872000884ae7ee2d7b66a8485f1e809f5e34281cd17ca5d8f4"
+  },
+  "question_text": "a) Represente el proyecto mediante una red ACTIVIDAD - NODO\nb) Calcule el tiempo esperado y la varianza de cada actividad, suponiendo una distribución beta unimodal de probabilidad.\nc) Calcule el tiempo de inicio esperado más temprano, el tiempo de inicio esperado más tarde, el tiempo de finalización esperado más temprano, el tiempo de finalización esperado más tarde y la holgura esperada, para cada una de las actividades del proyecto.\nd) Especifique la ruta crítica, el tiempo esperado de conclusión del proyecto y su varianza esperada.\ne) Encuentre la probabilidad de que las actividades de la ruta crítica concluyan dentro de 27 semanas; dentro de 25 semanas; dentro de 23 semanas;, en más de 27 semanas; entre 25 y 27 semanas.\nf) ¿Cuántas semanas permitirá una probabilidad del 90%, para concluir la ruta crítica a tiempo?",
+  "arcs": [
+    {"id": "A", "tail_node": 1, "head_node": 2, "optimistic_duration": 1, "most_likely_duration": 3, "pessimistic_duration": 5},
+    {"id": "B", "tail_node": 2, "head_node": 3, "optimistic_duration": 1, "most_likely_duration": 3, "pessimistic_duration": 5},
+    {"id": "C", "tail_node": 3, "head_node": 6, "optimistic_duration": 4, "most_likely_duration": 5, "pessimistic_duration": 6},
+    {"id": "D", "tail_node": 3, "head_node": 5, "optimistic_duration": 1, "most_likely_duration": 4, "pessimistic_duration": 7},
+    {"id": "E", "tail_node": 2, "head_node": 4, "optimistic_duration": 7, "most_likely_duration": 8, "pessimistic_duration": 9},
+    {"tail_node": 4, "head_node": 5, "is_dummy": true},
+    {"id": "F", "tail_node": 5, "head_node": 6, "optimistic_duration": 4, "most_likely_duration": 6, "pessimistic_duration": 8},
+    {"id": "G", "tail_node": 6, "head_node": 7, "optimistic_duration": 4, "most_likely_duration": 5, "pessimistic_duration": 6},
+    {"id": "H", "tail_node": 4, "head_node": 7, "optimistic_duration": 7, "most_likely_duration": 9, "pessimistic_duration": 11},
+    {"id": "I", "tail_node": 7, "head_node": 8, "optimistic_duration": 1, "most_likely_duration": 3, "pessimistic_duration": 5}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "title": "Taller 1 — Administración de proyectos",
+  "description": "Visual transcription of the activity-on-arrow figure (word/media/image2.png) and of the Actividad/Optimista/Normal/Pesimista table (word/media/image3.png). The sha256 values pin the transcription to those exact images. Only raw inputs are recorded here — no results.",
+  "source_images": {
+    "word/media/image2.png": "5af7122e11ca33713ee9dd60083cc05f781c8ce72e307b000043b787f8d6ce01",
+    "word/media/image3.png": "ab65294a05a87888cdeed83944e022ffa1dcb89478028a6be8adb04640972d9c"
+  },
+  "arcs": [
+    {"id": "A", "tail_node": 1, "head_node": 2, "optimistic_duration": 1, "most_likely_duration": 2, "pessimistic_duration": 3},
+    {"id": "B", "tail_node": 2, "head_node": 3, "optimistic_duration": 1, "most_likely_duration": 3, "pessimistic_duration": 5},
+    {"id": "C", "tail_node": 2, "head_node": 4, "optimistic_duration": 2, "most_likely_duration": 3, "pessimistic_duration": 10},
+    {"id": "D", "tail_node": 3, "head_node": 8, "optimistic_duration": 2, "most_likely_duration": 5, "pessimistic_duration": 8},
+    {"tail_node": 3, "head_node": 4, "is_dummy": true},
+    {"id": "E", "tail_node": 8, "head_node": 9, "optimistic_duration": 1, "most_likely_duration": 2, "pessimistic_duration": 3},
+    {"id": "F", "tail_node": 4, "head_node": 5, "optimistic_duration": 1, "most_likely_duration": 1, "pessimistic_duration": 1},
+    {"id": "G", "tail_node": 4, "head_node": 6, "optimistic_duration": 1, "most_likely_duration": 1, "pessimistic_duration": 1},
+    {"id": "H", "tail_node": 5, "head_node": 7, "optimistic_duration": 1, "most_likely_duration": 3, "pessimistic_duration": 5},
+    {"tail_node": 5, "head_node": 6, "is_dummy": true},
+    {"id": "I", "tail_node": 6, "head_node": 9, "optimistic_duration": 2, "most_likely_duration": 4, "pessimistic_duration": 6},
+    {"id": "J", "tail_node": 7, "head_node": 9, "optimistic_duration": 1, "most_likely_duration": 5, "pessimistic_duration": 9}
+  ]
+}

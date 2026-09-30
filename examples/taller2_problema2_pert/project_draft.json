@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "title": "Taller 2 - Problema 2 - PERT probabilistico Tufik Chediak",
+    "time_unit": {
+      "code": "week"
+    },
+    "source_description": "TALLER 2.docx.md - Problema 2, tabla de tres estimaciones (imagen) con predecesoras inmediatas",
+    "language": "es"
+  },
+  "activities": [
+    {
+      "id": "A",
+      "predecessors": [],
+      "optimistic_duration": 3,
+      "most_likely_duration": 4,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted"
+    },
+    {
+      "id": "B",
+      "predecessors": ["A"],
+      "optimistic_duration": 2,
+      "most_likely_duration": 2,
+      "pessimistic_duration": 2,
+      "provenance": "document_extracted"
+    },
+    {
+      "id": "C",
+      "predecessors": ["B"],
+      "optimistic_duration": 3,
+      "most_likely_duration": 5,
+      "pessimistic_duration": 6,
+      "provenance": "document_extracted"
+    },
+    {
+      "id": "D",
+      "predecessors": ["A"],
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted"
+    },
+    {
+      "id": "E",
+      "predecessors": ["B", "D"],
+      "optimistic_duration": 2,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted"
+    }
+  ],
+  "calculation_method": "PERT",
+  "requested_outputs": [
+    "GANTT",
+    "NETWORK_DIAGRAM",
+    "EARLY_LATE_TIMES",
+    "SLACK",
+    "CRITICAL_PATH",
+    "EXPECTED_DURATION",
+    "VARIANCE",
+    "ACTIVITY_ESTIMATES",
+    "PROBABILITY_QUERY"
+  ],
+  "probability_queries": [
+    {
+      "id": "d",
+      "kind": "AT_MOST",
+      "upper_bound": 11,
+      "provenance": "user_stated",
+      "source_text": "Encuentre la probabilidad aproximada de terminar el proyecto en 11 semanas."
+    }
+  ],
+  "questions": [
+    {
+      "label": "a",
+      "text": "Construya la red de proyecto para el problema.",
+      "outputs": ["NETWORK_DIAGRAM"]
+    },
+    {
+      "label": "b",
+      "text": "Encuentre la estimación de la media y la varianza de la duración de cada actividad.",
+      "outputs": ["ACTIVITY_ESTIMATES"]
+    },
+    {
+      "label": "c",
+      "text": "Encuentre la ruta crítica media.",
+      "outputs": ["CRITICAL_PATH", "EARLY_LATE_TIMES", "SLACK", "EXPECTED_DURATION"]
+    },
+    {
+      "label": "d",
+      "text": "Encuentre la probabilidad aproximada de terminar el proyecto en 11 semanas.",
+      "outputs": ["PROBABILITY_QUERY", "VARIANCE"],
+      "probability_query_ids": ["d"]
+    },
+    {
+      "label": "e",
+      "text": "Tufik desea presentar la licitación sólo si tiene al menos el 50% de oportunidad de cumplir la fecha de entrega de 11 semanas. ¿Qué le aconsejaría?",
+      "outputs": ["PROBABILITY_QUERY"],
+      "probability_query_ids": ["d"]
+    }
+  ],
+  "options": {
+    "probability_method": "exact",
+    "variance_strategy": "max_variance_path"
+  }
+}

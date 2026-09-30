@@ -1,0 +1,367 @@
+{
+  "metadata": {
+    "title": "Taller 1 — Administración de proyectos",
+    "source_description": "TALLER 1 ADMINISTRACIÓN DE PROYECTOS.docx"
+  },
+  "activities": [
+    {
+      "id": "A",
+      "optimistic_duration": 1,
+      "most_likely_duration": 2,
+      "pessimistic_duration": 3,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha A sale del nodo 1, al que no llega ninguna actividad: actividad inicial."
+      ]
+    },
+    {
+      "id": "B",
+      "predecessors": [
+        "A"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha B sale del nodo 2; llegan al nodo 2: A."
+      ]
+    },
+    {
+      "id": "C",
+      "predecessors": [
+        "A"
+      ],
+      "optimistic_duration": 2,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 10,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha C sale del nodo 2; llegan al nodo 2: A."
+      ]
+    },
+    {
+      "id": "D",
+      "predecessors": [
+        "B"
+      ],
+      "optimistic_duration": 2,
+      "most_likely_duration": 5,
+      "pessimistic_duration": 8,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha D sale del nodo 3; llegan al nodo 3: B."
+      ]
+    },
+    {
+      "id": "E",
+      "predecessors": [
+        "D"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 2,
+      "pessimistic_duration": 3,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha E sale del nodo 8; llegan al nodo 8: D."
+      ]
+    },
+    {
+      "id": "F",
+      "predecessors": [
+        "C",
+        "B"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 1,
+      "pessimistic_duration": 1,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha F sale del nodo 4; llegan al nodo 4: C; por la(s) ficticia(s) ficticia_3_4 también depende de B."
+      ]
+    },
+    {
+      "id": "G",
+      "predecessors": [
+        "C",
+        "B"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 1,
+      "pessimistic_duration": 1,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha G sale del nodo 4; llegan al nodo 4: C; por la(s) ficticia(s) ficticia_3_4 también depende de B."
+      ]
+    },
+    {
+      "id": "H",
+      "predecessors": [
+        "F"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 3,
+      "pessimistic_duration": 5,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha H sale del nodo 5; llegan al nodo 5: F."
+      ]
+    },
+    {
+      "id": "I",
+      "predecessors": [
+        "G",
+        "F"
+      ],
+      "optimistic_duration": 2,
+      "most_likely_duration": 4,
+      "pessimistic_duration": 6,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha I sale del nodo 6; llegan al nodo 6: G; por la(s) ficticia(s) ficticia_5_6 también depende de F."
+      ]
+    },
+    {
+      "id": "J",
+      "predecessors": [
+        "H"
+      ],
+      "optimistic_duration": 1,
+      "most_likely_duration": 5,
+      "pessimistic_duration": 9,
+      "provenance": "document_extracted",
+      "field_provenance": {
+        "predecessors": "inferred"
+      },
+      "provenance_notes": [
+        "La flecha J sale del nodo 7; llegan al nodo 7: H."
+      ]
+    }
+  ],
+  "probability_queries": [
+    {
+      "id": "d",
+      "kind": "AT_MOST",
+      "upper_bound": 13,
+      "provenance": "inferred",
+      "source_text": "la probabilidad de terminar el proyecto en 13 semanas o menos."
+    },
+    {
+      "id": "e",
+      "kind": "AT_LEAST",
+      "lower_bound": 16,
+      "provenance": "inferred",
+      "source_text": "la probabilidad de terminar el proyecto en 16 semanas o mas."
+    },
+    {
+      "id": "f",
+      "kind": "BETWEEN",
+      "lower_bound": 16,
+      "upper_bound": 20,
+      "provenance": "inferred",
+      "source_text": "la probabilidad de desarrollar el proyecto entre 16 y 20 semanas."
+    },
+    {
+      "id": "g",
+      "kind": "PERCENTILE_TO_DURATION",
+      "target_probability": 0.98,
+      "provenance": "inferred",
+      "source_text": "Si se desea firmar un contrato que especifique el tiempo de terminación del proyecto de modo que haya una probabilidad del 98 % de cumplir la fecha deseada, ¿Qué duración debería especificarse en el contrato?"
+    }
+  ],
+  "questions": [
+    {
+      "label": "a",
+      "text": "Elabore el diagrama Gantt",
+      "outputs": [
+        "GANTT"
+      ]
+    },
+    {
+      "label": "b",
+      "text": "Para cada actividad los tiempos de inicio más temprano, inicio más tardío, terminación más temprana, terminación más tardía y la holgura.",
+      "outputs": [
+        "EARLY_LATE_TIMES",
+        "SLACK"
+      ]
+    },
+    {
+      "label": "c",
+      "text": "El tiempo mínimo esperado del proyecto, su varianza y las actividades de la ruta crítica.",
+      "outputs": [
+        "CRITICAL_PATH",
+        "EXPECTED_DURATION",
+        "VARIANCE"
+      ]
+    },
+    {
+      "label": "d",
+      "text": "La probabilidad de terminar el proyecto en 13 semanas o menos.",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ],
+      "probability_query_ids": [
+        "d"
+      ]
+    },
+    {
+      "label": "e",
+      "text": "La probabilidad de terminar el proyecto en 16 semanas o más.",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ],
+      "probability_query_ids": [
+        "e"
+      ]
+    },
+    {
+      "label": "f",
+      "text": "La probabilidad de desarrollar el proyecto entre 16 y 20 semanas.",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ],
+      "probability_query_ids": [
+        "f"
+      ]
+    },
+    {
+      "label": "g",
+      "text": "Si se desea firmar un contrato que especifique el tiempo de terminación del proyecto de modo que haya una probabilidad del 98 % de cumplir la fecha deseada, ¿Qué duración debería especificarse en el contrato?",
+      "outputs": [
+        "PERCENTILE_DURATION"
+      ],
+      "probability_query_ids": [
+        "g"
+      ]
+    }
+  ],
+  "arrow_network_trace": [
+    {
+      "activity_id": "A",
+      "tail_node": "1",
+      "head_node": "2",
+      "predecessors": [],
+      "justification": "La flecha A sale del nodo 1, al que no llega ninguna actividad: actividad inicial."
+    },
+    {
+      "activity_id": "B",
+      "tail_node": "2",
+      "head_node": "3",
+      "predecessors": [
+        "A"
+      ],
+      "justification": "La flecha B sale del nodo 2; llegan al nodo 2: A."
+    },
+    {
+      "activity_id": "C",
+      "tail_node": "2",
+      "head_node": "4",
+      "predecessors": [
+        "A"
+      ],
+      "justification": "La flecha C sale del nodo 2; llegan al nodo 2: A."
+    },
+    {
+      "activity_id": "D",
+      "tail_node": "3",
+      "head_node": "8",
+      "predecessors": [
+        "B"
+      ],
+      "justification": "La flecha D sale del nodo 3; llegan al nodo 3: B."
+    },
+    {
+      "activity_id": "E",
+      "tail_node": "8",
+      "head_node": "9",
+      "predecessors": [
+        "D"
+      ],
+      "justification": "La flecha E sale del nodo 8; llegan al nodo 8: D."
+    },
+    {
+      "activity_id": "F",
+      "tail_node": "4",
+      "head_node": "5",
+      "predecessors": [
+        "C",
+        "B"
+      ],
+      "via_dummies": [
+        "ficticia_3_4"
+      ],
+      "justification": "La flecha F sale del nodo 4; llegan al nodo 4: C; por la(s) ficticia(s) ficticia_3_4 también depende de B."
+    },
+    {
+      "activity_id": "G",
+      "tail_node": "4",
+      "head_node": "6",
+      "predecessors": [
+        "C",
+        "B"
+      ],
+      "via_dummies": [
+        "ficticia_3_4"
+      ],
+      "justification": "La flecha G sale del nodo 4; llegan al nodo 4: C; por la(s) ficticia(s) ficticia_3_4 también depende de B."
+    },
+    {
+      "activity_id": "H",
+      "tail_node": "5",
+      "head_node": "7",
+      "predecessors": [
+        "F"
+      ],
+      "justification": "La flecha H sale del nodo 5; llegan al nodo 5: F."
+    },
+    {
+      "activity_id": "I",
+      "tail_node": "6",
+      "head_node": "9",
+      "predecessors": [
+        "G",
+        "F"
+      ],
+      "via_dummies": [
+        "ficticia_5_6"
+      ],
+      "justification": "La flecha I sale del nodo 6; llegan al nodo 6: G; por la(s) ficticia(s) ficticia_5_6 también depende de F."
+    },
+    {
+      "activity_id": "J",
+      "tail_node": "7",
+      "head_node": "9",
+      "predecessors": [
+        "H"
+      ],
+      "justification": "La flecha J sale del nodo 7; llegan al nodo 7: H."
+    }
+  ]
+}

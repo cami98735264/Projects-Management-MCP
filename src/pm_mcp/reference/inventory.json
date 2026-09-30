@@ -1,0 +1,698 @@
+{
+  "generated_by": "scripts/build_reference_inventory.py",
+  "sources": [
+    {
+      "source_id": "exercise_docx",
+      "file_name": "TALLER 1 ADMINISTRACIÓN DE PROYECTOS.docx",
+      "sha256": "8ecffe31047e6968c07fd2bbeab5c1962aa39e5efa6b0b7449bf04bd163add46",
+      "format": "docx",
+      "sheets": [],
+      "text_blocks": [
+        "TALLER 1: ADMINISTRACIÓN DE PROYECTOS",
+        "\nProblema",
+        "Basándose en la red de actividades de la figura y en los tiempos de actividad asociados que se dan en seguida (en semanas), calcule:",
+        "a) Elabore el diagrama Gantt",
+        "b) Para cada actividad los tiempos de inicio más temprano, inicio más tardío, terminación más temprana, terminación más tardía y la holgura.",
+        "c) El tiempo mínimo esperado del proyecto, su varianza y las actividades de la ruta crítica.",
+        "d) La probabilidad de terminar el proyecto en 13 semanas o menos.",
+        "e) La probabilidad de terminar el proyecto en 16 semanas o más.",
+        "f) La probabilidad de desarrollar el proyecto entre 16 y 20 semanas.\n\ng) Si se desea firmar un contrato que especifique el tiempo de terminación del proyecto de modo que haya una probabilidad del 98 % de cumplir la fecha deseada, ¿Qué duración debería especificarse en el contrato?",
+        "[IMAGE 1][IMAGE 2]|",
+        "Fórmulas PERT Probabilístico:",
+        "Tiempo esperado:                                             ",
+        "[IMAGE 3]",
+        "Varianza:",
+        "[IMAGE 4]",
+        "Sumatorio total de las actividades críticas:",
+        "[IMAGE 5]Actividades críticas",
+        "Desviación:",
+        "=[IMAGE 6]",
+        "A.C= Actividades críticas",
+        "[IMAGE 7]"
+      ],
+      "cells": [],
+      "images": [
+        {
+          "key": "exercise_docx:word/media/image2.png",
+          "part": "word/media/image2.png",
+          "location": "paragraph 11",
+          "sha256": "5af7122e11ca33713ee9dd60083cc05f781c8ce72e307b000043b787f8d6ce01",
+          "width": 399,
+          "height": 161
+        },
+        {
+          "key": "exercise_docx:word/media/image3.png",
+          "part": "word/media/image3.png",
+          "location": "paragraph 11",
+          "sha256": "ab65294a05a87888cdeed83944e022ffa1dcb89478028a6be8adb04640972d9c",
+          "width": 386,
+          "height": 312
+        },
+        {
+          "key": "exercise_docx:word/media/image4.png",
+          "part": "word/media/image4.png",
+          "location": "paragraph 15",
+          "sha256": "202138914280dbcec04bd085cc222d8661aea5ff09af40445a6ce04b43f6cde5",
+          "width": 156,
+          "height": 60
+        },
+        {
+          "key": "exercise_docx:word/media/image5.png",
+          "part": "word/media/image5.png",
+          "location": "paragraph 17",
+          "sha256": "9a18caadb9d98c04bdf5a44327e98e73b233d61e1e1e86df093e4088e9b5d85c",
+          "width": 163,
+          "height": 70
+        },
+        {
+          "key": "exercise_docx:word/media/image6.png",
+          "part": "word/media/image6.png",
+          "location": "paragraph 19",
+          "sha256": "c4328e931e790f138929f7f20c290e131a855c3ea125b9e5f1602557d930085e",
+          "width": 84,
+          "height": 54
+        },
+        {
+          "key": "exercise_docx:word/media/image7.png",
+          "part": "word/media/image7.png",
+          "location": "paragraph 22",
+          "sha256": "ab8732d4d046e6cef38b633f35c4a1c0f695db2eb8ee7fc3aace854ccdebb8d9",
+          "width": 82,
+          "height": 41
+        },
+        {
+          "key": "exercise_docx:word/media/image8.png",
+          "part": "word/media/image8.png",
+          "location": "paragraph 26",
+          "sha256": "f43bb687fb090a409373a4e1f5c042c3cd7fa7161087891c0bd633a857729f3a",
+          "width": 699,
+          "height": 243
+        },
+        {
+          "key": "exercise_docx:word/media/image1.png",
+          "part": "word/media/image1.png",
+          "location": "referenced from word/numbering.xml",
+          "sha256": "8284c7e6f454311fa8acd0c2f65506ec779658c9da9aaaf9bb42f1ce489a6be6",
+          "width": 19,
+          "height": 20
+        }
+      ]
+    },
+    {
+      "source_id": "concepts_xlsx",
+      "file_name": "CONCEPTOS GENERALES ADMON. PROYECTOS.xlsx",
+      "sha256": "f95c0b32358c68bdb0048b9ac9a0afae904fb9c07647c8dd8ec5c26e1abc6abc",
+      "format": "xlsx",
+      "sheets": [
+        "Diagrama Gantt (2)",
+        "Diagrama Gantt",
+        "Red Actividad Nodo",
+        "PERT Probabilístico",
+        "CPM",
+        "Problema 2 CPM",
+        "Hoja1"
+      ],
+      "text_blocks": [],
+      "cells": [
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B2",
+          "value": "Administración de proyectos Gantt - PERT - CPM",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I3",
+          "value": "Costo directo:",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B4",
+          "value": "Introducción Este tema nos muestra las herramientas básicas para administrar un proyecto, como son: El diagrama Gantt, el PERT probabilístico y el método CPM. ",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I4",
+          "value": "Materia Prima",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "K4",
+          "value": "Costo Indirecto:",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I5",
+          "value": "Mano de obra",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "K5",
+          "value": "Consumo de energia de la empresa",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I6",
+          "value": "Transporte",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "K6",
+          "value": "Mano de obra indirecta que son las personas que trabajan varios productos en la empresa",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I7",
+          "value": "Comisiones",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "K7",
+          "value": "planta administrativa",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "I8",
+          "value": "Campañas publicitarias",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B10",
+          "value": "Usos principales",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B11",
+          "value": "1. Determinar la duración mínima de un proyecto.",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B12",
+          "value": "Determinar la probabilidad de que el proyecto se termine dentro de un tiempo predeterminado.",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B16",
+          "value": "2. Identificar las actividades que pueden ser cuello de botella y que conforman la ruta crítica. Conocer dichas actividades tiene un efecto directo sobre la agenda de quien toma las decisiones y sobre la elección del personal responsable del cumplimiento del cronograma de dichas actividades, ya que pueden causar consecuencias económicas graves para la empresa e inclusive para su existencia.",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B21",
+          "value": "El primer paso, para aplicar el sistema PERT o CPM a un proyecto, es representar el proyecto en forma de una red, para lo cual es útil la construcción de un diagrama Gantt, que identifica claramente los diferentes tipos de tiempos que se deben tener encuenta  para la representación gráfica de la red PERT o CPM. ",
+          "is_formula": false
+        },
+        {
+          "sheet": "Diagrama Gantt (2)",
+          "cell": "B28",
+          "value": "Existen dos técnicas para representar los proyectos, una denominada ACTIVIDAD - RAMAL, en la cual, las actividades van sobre los ramales de la red y los nodos representan los sucesos; y otra, llamada ACTIVIDAD - NODO, en la que las actividades van sobre los nodos y los ramales indicando la precedencia de las actividades. Emplearemos la segunda técnica, ACTIVIDAD - NODO, por ofrecer mayor facilidad en la representación gráfica de las actividades y de sus precedencias.",
+          "is_formula": false
+        },
+        {
+          "sheet": "CPM",
+          "cell": "T2",
+          "value": "PROBLEMA 1",
+          "is_formula": false
+        },
+        {
+          "sheet": "Problema 2 CPM",
+          "cell": "A6",
+          "value": "    PROBLEMA 2",
+          "is_formula": false
+        }
+      ],
+      "images": [
+        {
+          "key": "concepts_xlsx:xl/media/image1.png",
+          "part": "xl/media/image1.png",
+          "location": "sheet 'Diagrama Gantt (2)' row 64 col 17",
+          "sha256": "4966d6b8866cf516ae964ecde579dc0b3728a73eb5a252bc332c24fdb1c7c619",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image2.png",
+          "part": "xl/media/image2.png",
+          "location": "sheet 'Diagrama Gantt' row 1 col 1",
+          "sha256": "21e0c189981f885e6ec04ff6dc2e8638513724acb27d42b8b99b6afea0909f2f",
+          "width": 759,
+          "height": 721
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image10.png",
+          "part": "xl/media/image10.png",
+          "location": "sheet 'Diagrama Gantt' row 1 col 16",
+          "sha256": "57590d993765721049bd3324ecc68627ec0199a56d2abb4b6d663cfd9d7e0a1d",
+          "width": 747,
+          "height": 597
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image6.png",
+          "part": "xl/media/image6.png",
+          "location": "sheet 'Diagrama Gantt' row 2 col 8",
+          "sha256": "476de176545c0de4812f23cce971705fd24a369f427c8e88aa19ef297fb41e5d",
+          "width": 743,
+          "height": 204
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image9.png",
+          "part": "xl/media/image9.png",
+          "location": "sheet 'Diagrama Gantt' row 2 col 23",
+          "sha256": "ebad1304eeb1cd4060bda9953b3262e368b70e0d366145100c05e9e59347bb47",
+          "width": 745,
+          "height": 242
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image7.png",
+          "part": "xl/media/image7.png",
+          "location": "sheet 'Diagrama Gantt' row 11 col 9",
+          "sha256": "25990028855a30ffebeddb21e49704e59a9265fbb34c7fc92e27cdd3f6f0e4e3",
+          "width": 294,
+          "height": 24
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image3.png",
+          "part": "xl/media/image3.png",
+          "location": "sheet 'Diagrama Gantt' row 12 col 8",
+          "sha256": "7fcc7aea22dace11f346515f4a0a894f85e0f54105befdaa86b69867c2b14165",
+          "width": 753,
+          "height": 299
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image11.png",
+          "part": "xl/media/image11.png",
+          "location": "sheet 'Diagrama Gantt' row 12 col 23",
+          "sha256": "0992e97badc03d40f68cc38d85b5d98b184b7e9e164fe152aedd5069129853cb",
+          "width": 751,
+          "height": 109
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image12.png",
+          "part": "xl/media/image12.png",
+          "location": "sheet 'Diagrama Gantt' row 17 col 23",
+          "sha256": "2f45554f57f74cce32c0f84c64e925561b46e92df190a0a199351587fa68f490",
+          "width": 738,
+          "height": 43
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image5.png",
+          "part": "xl/media/image5.png",
+          "location": "sheet 'Diagrama Gantt' row 20 col 23",
+          "sha256": "f5429574ad054ae378e0827ccd96957f2b3f8f15603fc5c3f6548c16deae1902",
+          "width": 747,
+          "height": 310
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image4.png",
+          "part": "xl/media/image4.png",
+          "location": "sheet 'Diagrama Gantt' row 27 col 8",
+          "sha256": "45990031a4fdce7de043f8dd30785d945ba5b853034f520e20da39a41a42fd94",
+          "width": 751,
+          "height": 875
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image8.png",
+          "part": "xl/media/image8.png",
+          "location": "sheet 'Diagrama Gantt' row 37 col 1",
+          "sha256": "7d6cacdcfe5d47ca2c205a1e0d35b71b5596751a096bd489d655e5abe506ffbc",
+          "width": 562,
+          "height": 289
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image13.png",
+          "part": "xl/media/image13.png",
+          "location": "sheet 'Diagrama Gantt' row 50 col 2",
+          "sha256": "b47ac6359f05c5e6148e54a177ba3d39da678fdcc17092ba26136f682a0408b2",
+          "width": 84,
+          "height": 35
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image1.png",
+          "part": "xl/media/image1.png",
+          "location": "sheet 'Diagrama Gantt' row 74 col 17",
+          "sha256": "4966d6b8866cf516ae964ecde579dc0b3728a73eb5a252bc332c24fdb1c7c619",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image14.png",
+          "part": "xl/media/image14.png",
+          "location": "sheet 'Red Actividad Nodo' row 1 col 1",
+          "sha256": "e7c9bf632fb9557bffeec93239454ea0f1b855877d4492d0cdd64f335ff0440c",
+          "width": 747,
+          "height": 755
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image8.png",
+          "part": "xl/media/image8.png",
+          "location": "sheet 'Red Actividad Nodo' row 2 col 9",
+          "sha256": "7d6cacdcfe5d47ca2c205a1e0d35b71b5596751a096bd489d655e5abe506ffbc",
+          "width": 562,
+          "height": 289
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image13.png",
+          "part": "xl/media/image13.png",
+          "location": "sheet 'Red Actividad Nodo' row 15 col 10",
+          "sha256": "b47ac6359f05c5e6148e54a177ba3d39da678fdcc17092ba26136f682a0408b2",
+          "width": 84,
+          "height": 35
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image15.png",
+          "part": "xl/media/image15.png",
+          "location": "sheet 'PERT Probabilístico' row 1 col 1",
+          "sha256": "01cf33ade4c4d0b543f5fbe3a36dfda1dd55f76bb4018a896e9a13b8cf71b5c3",
+          "width": 601,
+          "height": 787
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image22.png",
+          "part": "xl/media/image22.png",
+          "location": "sheet 'PERT Probabilístico' row 1 col 32",
+          "sha256": "56873c5924c6f210fe96723306e07a0fb2c4ff5b8a58e8618f6b959cee379f7d",
+          "width": 599,
+          "height": 141
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image16.png",
+          "part": "xl/media/image16.png",
+          "location": "sheet 'PERT Probabilístico' row 2 col 7",
+          "sha256": "5b3862d0ca75bf872000884ae7ee2d7b66a8485f1e809f5e34281cd17ca5d8f4",
+          "width": 599,
+          "height": 807
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image17.png",
+          "part": "xl/media/image17.png",
+          "location": "sheet 'PERT Probabilístico' row 2 col 14",
+          "sha256": "3ee145c7013f13cf2a0582130f53883096692fd67c9b31ed1f53d0f9d66367d7",
+          "width": 601,
+          "height": 137
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image19.png",
+          "part": "xl/media/image19.png",
+          "location": "sheet 'PERT Probabilístico' row 2 col 20",
+          "sha256": "fd86dc4a3a55bbd113757df612a1ab32c0f3480f42d090aca3676c590ef52745",
+          "width": 601,
+          "height": 591
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image20.png",
+          "part": "xl/media/image20.png",
+          "location": "sheet 'PERT Probabilístico' row 2 col 26",
+          "sha256": "f1e8fde3920fb8fa6e4257d340454733bf246312b689f012592dd5056e19c9fb",
+          "width": 603,
+          "height": 459
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image18.png",
+          "part": "xl/media/image18.png",
+          "location": "sheet 'PERT Probabilístico' row 8 col 13",
+          "sha256": "8aaf418899e4d3e104b034016f80d164a6f050509d632db5fbe42ab35df9c68c",
+          "width": 599,
+          "height": 345
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image23.png",
+          "part": "xl/media/image23.png",
+          "location": "sheet 'PERT Probabilístico' row 8 col 32",
+          "sha256": "96cf8ed92336fab461cdc99da14f7dfb583d66e93afc7322cb929ddcbf5bb5bd",
+          "width": 597,
+          "height": 79
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image24.png",
+          "part": "xl/media/image24.png",
+          "location": "sheet 'PERT Probabilístico' row 20 col 31",
+          "sha256": "49f5d59c25f0ad2b9817f78e7c9b78f397971eef3030df4a3ebaee4684eacb16",
+          "width": 308,
+          "height": 127
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image21.png",
+          "part": "xl/media/image21.png",
+          "location": "sheet 'PERT Probabilístico' row 22 col 26",
+          "sha256": "b126148141137f42c710849c66d4c03901760153c38da385b8580774392f79b5",
+          "width": 579,
+          "height": 281
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image25.png",
+          "part": "xl/media/image25.png",
+          "location": "sheet 'PERT Probabilístico' row 23 col 31",
+          "sha256": "0fd8e6cb0168a9c042939fdbfb3f5114f946ea2072ac58b474b26cba0a3855f3",
+          "width": 329,
+          "height": 142
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image26.png",
+          "part": "xl/media/image26.png",
+          "location": "sheet 'PERT Probabilístico' row 26 col 31",
+          "sha256": "8fae77c886485d21e35be9ef38e52c88a61cdd0904ad9de0fdcb238694b1b010",
+          "width": 312,
+          "height": 140
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image27.png",
+          "part": "xl/media/image27.png",
+          "location": "sheet 'PERT Probabilístico' row 28 col 23",
+          "sha256": "9e556ebf7d46cf3fe89e3550ec8e1443b5ac2ef0862d79da695af51be28eecca",
+          "width": 396,
+          "height": 168
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image28.png",
+          "part": "xl/media/image28.png",
+          "location": "sheet 'PERT Probabilístico' row 30 col 31",
+          "sha256": "5be3e6640607a9f0ed003371a553c67405e7ab168f86aa22a22520844b06693f",
+          "width": 334,
+          "height": 145
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image29.png",
+          "part": "xl/media/image29.png",
+          "location": "sheet 'CPM' row 1 col 1",
+          "sha256": "6f7bdb44709a972e03c7ac14cb35b5f6c984f014c29c8e360e07bc46b5a9ef6f",
+          "width": 383,
+          "height": 80
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image36.png",
+          "part": "xl/media/image36.png",
+          "location": "sheet 'CPM' row 1 col 26",
+          "sha256": "7c39225ec8468d3909e914a41bb68ee3f977db1af41d6c1ba4d1b8965a5a6dc3",
+          "width": 603,
+          "height": 585
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image40.png",
+          "part": "xl/media/image40.png",
+          "location": "sheet 'CPM' row 1 col 38",
+          "sha256": "3c3fc585dc1d8522a54eed0f69f4b4deda9334bf9e052180993445de0931643d",
+          "width": 599,
+          "height": 795
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image41.png",
+          "part": "xl/media/image41.png",
+          "location": "sheet 'CPM' row 1 col 44",
+          "sha256": "07d23be922b9b709b25b7362e1ee85eefb1c29a179b7238bd9fcb298affaba85",
+          "width": 337,
+          "height": 190
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image32.png",
+          "part": "xl/media/image32.png",
+          "location": "sheet 'CPM' row 2 col 7",
+          "sha256": "a16a066fc6a750bfe1b57805c89d70494185b4319395b5e36f64af0b144090a2",
+          "width": 620,
+          "height": 561
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image33.png",
+          "part": "xl/media/image33.png",
+          "location": "sheet 'CPM' row 2 col 13",
+          "sha256": "6af2bd59dfadb0ead274001ea28fa5ed5f1c3f9247e8faf0f5c0019249d6cbc6",
+          "width": 598,
+          "height": 354
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image38.png",
+          "part": "xl/media/image38.png",
+          "location": "sheet 'CPM' row 2 col 32",
+          "sha256": "7327480a812748425bd484514fefa96123732595c100cad66eb2222753883b81",
+          "width": 609,
+          "height": 595
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image35.png",
+          "part": "xl/media/image35.png",
+          "location": "sheet 'CPM' row 3 col 19",
+          "sha256": "930e176495749d2801b87055beca1b754470d93ca91e83a9f6d4dd5d93e2a649",
+          "width": 601,
+          "height": 791
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image30.png",
+          "part": "xl/media/image30.png",
+          "location": "sheet 'CPM' row 4 col 1",
+          "sha256": "cf044f1ae6b4020a0d3ca0d9215e985cc0945f55d0f19dde861c93dab3f61d0c",
+          "width": 601,
+          "height": 479
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image42.png",
+          "part": "xl/media/image42.png",
+          "location": "sheet 'CPM' row 10 col 44",
+          "sha256": "4bef8b2af941986017e9a44d09d8ac45fa5f03299531035bca5de4f815ca21c2",
+          "width": 565,
+          "height": 215
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image34.png",
+          "part": "xl/media/image34.png",
+          "location": "sheet 'CPM' row 17 col 13",
+          "sha256": "4389b621244d261ff2b24d591b735733b64d87114a59d955cd3e2ec6e3ab438b",
+          "width": 596,
+          "height": 66
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image31.png",
+          "part": "xl/media/image31.png",
+          "location": "sheet 'CPM' row 25 col 1",
+          "sha256": "519e479f9e002b8d144632b1f1f06dee4f82a3232fbd048cbeebe738afb593d3",
+          "width": 590,
+          "height": 225
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image37.png",
+          "part": "xl/media/image37.png",
+          "location": "sheet 'CPM' row 27 col 26",
+          "sha256": "c11b34782f008e133a69747b451d4798103b497541b4c6eb408781032ba578d1",
+          "width": 605,
+          "height": 277
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image39.png",
+          "part": "xl/media/image39.png",
+          "location": "sheet 'CPM' row 27 col 32",
+          "sha256": "d55b3e47aeeab59857cc0caed541408c073fb64de322275eac081ebac9a606b5",
+          "width": 601,
+          "height": 271
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image46.png",
+          "part": "xl/media/image46.png",
+          "location": "sheet 'Problema 2 CPM' row 1 col 7",
+          "sha256": "d3775081351abe9138a50bb613b20cd65b64e8326222d8cb8b114a6d2dd0fabf",
+          "width": 597,
+          "height": 322
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image48.png",
+          "part": "xl/media/image48.png",
+          "location": "sheet 'Problema 2 CPM' row 1 col 13",
+          "sha256": "09dac9e6b6efbca2951774901ec2cae42a083c1b71c3078b94616a95d95d46f1",
+          "width": 595,
+          "height": 447
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image50.png",
+          "part": "xl/media/image50.png",
+          "location": "sheet 'Problema 2 CPM' row 1 col 19",
+          "sha256": "d87fd44c8dd35239d485b99bf62a89584f04a6cc8b222f1934cdd4a4e12dca25",
+          "width": 595,
+          "height": 375
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image51.png",
+          "part": "xl/media/image51.png",
+          "location": "sheet 'Problema 2 CPM' row 1 col 25",
+          "sha256": "81af35535f96f0fbc442d2ec0b2a313fc79fac529735c13a53fc1ac66a438fed",
+          "width": 601,
+          "height": 611
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image43.png",
+          "part": "xl/media/image43.png",
+          "location": "sheet 'Problema 2 CPM' row 2 col 1",
+          "sha256": "4f40d2c1659151c694528d4735d5d6181d2f9e97b5ec2ce11680ce9a621b5d90",
+          "width": 596,
+          "height": 85
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image44.png",
+          "part": "xl/media/image44.png",
+          "location": "sheet 'Problema 2 CPM' row 7 col 1",
+          "sha256": "c8e9106ff64e12b1caf8f25e7d82421652a62a681fc3402e9afc35c26c9f9d15",
+          "width": 596,
+          "height": 481
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image47.png",
+          "part": "xl/media/image47.png",
+          "location": "sheet 'Problema 2 CPM' row 16 col 7",
+          "sha256": "7ab7d0a6c13fa5bfb92d18dc6b26fc3b2e944e0ef8fe33c45ac300b5837a8a09",
+          "width": 603,
+          "height": 369
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image45.png",
+          "part": "xl/media/image45.png",
+          "location": "sheet 'Problema 2 CPM' row 19 col 30",
+          "sha256": "e4bb03832d80e39b1602e4aca8b212c4e4299b8cb337f94a1bec377b53826be9",
+          "width": 531,
+          "height": 61
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image49.png",
+          "part": "xl/media/image49.png",
+          "location": "sheet 'Problema 2 CPM' row 20 col 13",
+          "sha256": "f5cd84a744a35038e9bd3d2efbcdef28b6978971e7d377c6d44722aad8b5c86f",
+          "width": 609,
+          "height": 367
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image53.png",
+          "part": "xl/media/image53.png",
+          "location": "sheet 'Problema 2 CPM' row 20 col 19",
+          "sha256": "c2cd09ed6c0698498174b6b6381f85f46b59dad57abe852c7c817509cf620658",
+          "width": 479,
+          "height": 267
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image52.png",
+          "part": "xl/media/image52.png",
+          "location": "sheet 'Problema 2 CPM' row 26 col 25",
+          "sha256": "bdd277c7e9e47501371c185efef23e679bd2d462b29f7b74bc7922c80b54c012",
+          "width": 513,
+          "height": 280
+        },
+        {
+          "key": "concepts_xlsx:xl/media/image45.png",
+          "part": "xl/media/image45.png",
+          "location": "sheet 'Problema 2 CPM' row 28 col 1",
+          "sha256": "e4bb03832d80e39b1602e4aca8b212c4e4299b8cb337f94a1bec377b53826be9",
+          "width": 531,
+          "height": 61
+        }
+      ]
+    }
+  ]
+}

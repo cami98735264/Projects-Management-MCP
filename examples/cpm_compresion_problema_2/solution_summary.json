@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "sheets": [
+    "Enunciado",
+    "Datos",
+    "CPM",
+    "Red AON",
+    "Compresión",
+    "Resultados"
+  ],
+  "answers": [
+    {
+      "label": "1",
+      "question": "Red actividad-nodo",
+      "answer": "Red actividad-nodo en la hoja 'Red AON' con la simbología de nodo de seis casillas.",
+      "outputs": [
+        "NETWORK_DIAGRAM"
+      ]
+    },
+    {
+      "label": "2",
+      "question": "Ruta crítica",
+      "answer": "Ruta crítica: C – E – F.",
+      "outputs": [
+        "CRITICAL_PATH"
+      ]
+    },
+    {
+      "label": "3",
+      "question": "Compresión del proyecto",
+      "answer": "Duración normal 13 semanas con costo directo 5100; se puede reducir hasta 9 semanas con costo directo 6400. Duración de costo total mínimo: 11 semanas (costo total 11600).",
+      "outputs": [
+        "CRASHING"
+      ]
+    }
+  ],
+  "calculation_checks": [
+    [
+      "network arcs match the activity predecessor lists",
+      true
+    ],
+    [
+      "schedule: durations match their source",
+      true
+    ],
+    [
+      "schedule: EF−ES = LF−LS = duration and LS−ES = LF−EF",
+      true
+    ],
+    [
+      "schedule: every precedence respected",
+      true
+    ],
+    [
+      "schedule: project duration = longest path (independent relaxation)",
+      true
+    ],
+    [
+      "schedule: each critical path sums to the project duration",
+      true
+    ],
+    [
+      "Gantt bars match ES→EF / LS→LF and critical flags",
+      true
+    ],
+    [
+      "crashing states re-scheduled and re-costed",
+      true
+    ]
+  ],
+  "workbook_validation": {
+    "passed": true,
+    "formula_count": 168,
+    "evaluated_formula_count": 168,
+    "expected_values_checked": 168,
+    "conditional_format_rules": 8
+  },
+  "inferences": [
+    {
+      "field_path": "calculation_method",
+      "value": "CPM",
+      "justification": "Every activity has a single deterministic duration and no three-point estimates.",
+      "provenance": "inferred"
+    }
+  ],
+  "warnings": []
+}

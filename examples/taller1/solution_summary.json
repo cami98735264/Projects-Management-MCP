@@ -1,0 +1,183 @@
+{
+  "ok": true,
+  "sheets": [
+    "Enunciado",
+    "Datos",
+    "PERT",
+    "CPM",
+    "Gantt",
+    "Probabilidad",
+    "Resultados"
+  ],
+  "answers": [
+    {
+      "label": "a",
+      "question": "Elabore el diagrama Gantt",
+      "answer": "Diagrama Gantt en la hoja 'Gantt': 10 actividades en 15 semanas; barras de tiempos más tempranos y más tardíos; observaciones con actividades críticas y holguras.",
+      "outputs": [
+        "GANTT"
+      ]
+    },
+    {
+      "label": "b",
+      "question": "Para cada actividad los tiempos de inicio más temprano, inicio más tardío, terminación más temprana, terminación más tardía y la holgura.",
+      "answer": "(hoja 'CPM') A: IC 0, TC 2, IL 0, TL 2, holgura 0; B: IC 2, TC 5, IL 3, TL 6, holgura 1; C: IC 2, TC 6, IL 2, TL 6, holgura 0; D: IC 5, TC 10, IL 8, TL 13, holgura 3; E: IC 10, TC 12, IL 13, TL 15, holgura 3; F: IC 6, TC 7, IL 6, TL 7, holgura 0; G: IC 6, TC 7, IL 10, TL 11, holgura 4; H: IC 7, TC 10, IL 7, TL 10, holgura 0; I: IC 7, TC 11, IL 11, TL 15, holgura 4; J: IC 10, TC 15, IL 10, TL 15, holgura 0.",
+      "outputs": [
+        "EARLY_LATE_TIMES",
+        "SLACK"
+      ]
+    },
+    {
+      "label": "c",
+      "question": "El tiempo mínimo esperado del proyecto, su varianza y las actividades de la ruta crítica.",
+      "answer": "Ruta crítica: A – C – F – H – J. Tiempo esperado mínimo del proyecto (t_e): 15 semanas. Varianza del proyecto: σ² = 1/9 + 16/9 + 0 + 4/9 + 16/9 = 37/9 ≈ 4.1111; desviación estándar σ = √(37/9) = 2.0276.",
+      "outputs": [
+        "CRITICAL_PATH",
+        "EXPECTED_DURATION",
+        "VARIANCE"
+      ]
+    },
+    {
+      "label": "d",
+      "question": "La probabilidad de terminar el proyecto en 13 semanas o menos.",
+      "answer": "P(T ≤ 13) = 0.1620 (Z = -0.9864; con tabla: 0.1611).",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ]
+    },
+    {
+      "label": "e",
+      "question": "La probabilidad de terminar el proyecto en 16 semanas o más.",
+      "answer": "P(T ≥ 16) = 0.3109 (Z = 0.4932; con tabla: 0.3121).",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ]
+    },
+    {
+      "label": "f",
+      "question": "La probabilidad de desarrollar el proyecto entre 16 y 20 semanas.",
+      "answer": "P(16 ≤ T ≤ 20) = 0.3041 (Z = 2.466, Z = 0.4932; con tabla: 0.3053).",
+      "outputs": [
+        "PROBABILITY_QUERY"
+      ]
+    },
+    {
+      "label": "g",
+      "question": "Si se desea firmar un contrato que especifique el tiempo de terminación del proyecto de modo que haya una probabilidad del 98 % de cumplir la fecha deseada, ¿Qué duración debería especificarse en el contrato?",
+      "answer": "Para 98 %: Z = 2.0537 → T = 19.1642; con tabla Z = 2.06 → T = 19.1768; duración a especificar: 20 semanas.",
+      "outputs": [
+        "PERCENTILE_DURATION"
+      ]
+    }
+  ],
+  "calculation_checks": [
+    [
+      "network arcs match the activity predecessor lists",
+      true
+    ],
+    [
+      "PERT t_e = a/6 + 2m/3 + b/6 and σ² = (b−a)²/36",
+      true
+    ],
+    [
+      "schedule: durations match their source",
+      true
+    ],
+    [
+      "schedule: EF−ES = LF−LS = duration and LS−ES = LF−EF",
+      true
+    ],
+    [
+      "schedule: every precedence respected",
+      true
+    ],
+    [
+      "schedule: project duration = longest path (independent relaxation)",
+      true
+    ],
+    [
+      "schedule: each critical path sums to the project duration",
+      true
+    ],
+    [
+      "project variance re-summed from the raw estimates",
+      true
+    ],
+    [
+      "probabilities re-derived by numerical integration of the normal pdf",
+      true
+    ],
+    [
+      "percentile durations re-derived (Φ(Z) round-trip, table rule)",
+      true
+    ],
+    [
+      "Gantt bars match ES→EF / LS→LF and critical flags",
+      true
+    ]
+  ],
+  "workbook_validation": {
+    "passed": true,
+    "formula_count": 548,
+    "evaluated_formula_count": 548,
+    "expected_values_checked": 548,
+    "conditional_format_rules": 23
+  },
+  "inferences": [
+    {
+      "field_path": "requested_outputs",
+      "value": "GANTT",
+      "justification": "Question 'a' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "EARLY_LATE_TIMES",
+      "justification": "Question 'b' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "SLACK",
+      "justification": "Question 'b' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "CRITICAL_PATH",
+      "justification": "Question 'c' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "EXPECTED_DURATION",
+      "justification": "Question 'c' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "VARIANCE",
+      "justification": "Question 'c' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "PROBABILITY_QUERY",
+      "justification": "Question 'd' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "requested_outputs",
+      "value": "PERCENTILE_DURATION",
+      "justification": "Question 'g' asks for it.",
+      "provenance": "inferred"
+    },
+    {
+      "field_path": "calculation_method",
+      "value": "PERT",
+      "justification": "Every activity has optimistic, most likely and pessimistic durations.",
+      "provenance": "inferred"
+    }
+  ],
+  "warnings": []
+}
