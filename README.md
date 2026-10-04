@@ -78,8 +78,8 @@ src/pm_mcp/
   output/   workbook.py           sheet planning + live-formula writer
             formula_eval.py       Excel formula evaluator (whitelisted grammar)
             workbook_validation.py round-trip validation
-            network_diagram.py    AON drawing in the reference notation
-            answers.py            per-question answer text and procedure (variables + operations) from engine results
+            network_diagram.py    AON drawing: layered layout, exact crossing minimisation, straight critical path
+            answers.py            per-question answer (direct result first, bullet lines) and numbered procedure steps
   reference/ inventory.json       machine-generated inventory of the reference files
             methodology.json      curated classification + methodology rules with sources
 tests/                            99 tests (unit, integration, golden, synthetic, server, guards) + fixtures
@@ -209,7 +209,7 @@ Sheets are planned by `plan_sheets(project, outputs)`:
 | Compresión / Crashing | CRASHING | Slope formulas, step table with chained cost formulas, direct/indirect/total summary, optimum check, and a **cost-against-duration chart** over that summary |
 | Red AON por paso / Network per step | NETWORK_DIAGRAM **and** CRASHING | One AON diagram **per compression step**: the same network re-scheduled with that step's durations, so every node's t, IC \| TC, IL \| TL and slack are the step's own and the critical path moves with them. Beside each picture, a panel linked to the compression sheet (project duration, activity shortened to reach the step, direct-cost increase paid, direct / indirect / total cost, length of every route) and one sentence saying what was shortened and what is shortened next |
 | Curva de costos / Cost curve | schedule outputs **and** a duration + cost for every activity | Per-activity cost and cost per period (linked to Compresión or Datos), a row per period with the activities in progress, that period's cost and the cumulative cost, a self-check `=acumulado−total`, and a combined **S-curve** chart (cumulative line + per-period columns, repeated on the Red AON sheet) |
-| Resultados / Final Results | always | One row per question with answer text, a **Procedimiento** column (variables, constants and every operation with the numbers used) and a **linked key value**; provenance counts; assumptions; the independent check table; warnings |
+| Resultados / Final Results | always | One block per question: the answer as short bullet lines (direct result first), the **Procedimiento** as numbered steps — one row per step, bold title with the formula and one substituted operation per line — and a **linked key value**; provenance counts; assumptions; the independent check table; warnings |
 
 Derived numbers are **live formulas** chained from Datos, so changing an estimate recalculates the whole workbook (tested). Each formula is written with the engine's value cached.
 
@@ -374,5 +374,5 @@ Critical path **A – C – F – H – J** (2 + 4 + 1 + 3 + 5 = 15).
 * The LLM orchestration prompt is documented (§8 and the `solve_exercise_workflow` prompt) but not implemented. Visual transcription of images is the LLM's job; OCR is only a hint.
 * With several critical paths, the reference material gives no rule for project variance. The default (largest-variance path) is documented and configurable.
 * A Gantt cell with a fractional start or finish is shaded whole; `partial_columns` lists these cells.
-* The network layout is a longest-level, barycenter heuristic. Very large graphs render legibly but not optimally.
+* The network layout is layered (longest level). Arcs spanning several columns are routed through virtual nodes in the free space between boxes. Column orders are chosen by exact crossing minimisation when the number of combinations is ≤ 40 000 (every exercise-sized network); above that, barycenter sweeps + transpositions are used, which are good but not guaranteed optimal. One critical path is pinned to a single height so it is drawn as a straight line.
 * PDF text extraction needs the `pdf` extra. Scanned PDFs need image extraction and visual reading.

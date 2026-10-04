@@ -24,7 +24,7 @@ def test_cpm_only_days_english_two_critical_paths(output_dir):
     solution = solve_project(normalized(draft))
     assert solution.project.calculation_method == "CPM" and solution.pert is None and solution.variance is None
     answers = {a.outputs[0]: a.answer for a in solution.answers}
-    assert "S2 – Q – T – W; S2 – Q – V – X" in answers["CRITICAL_PATH"]
+    assert "Critical paths: S2 → Q → T → W; S2 → Q → V → X" in answers["CRITICAL_PATH"]
     assert "Activity P can be delayed up to 1 day" in answers["ACTIVITY_MAX_DELAY"]
     result = generate_workbook(draft, "launch.xlsx")
     assert result.ok and result.sheets == ["Problem", "Activity Data", "CPM", "Gantt", "Final Results"]

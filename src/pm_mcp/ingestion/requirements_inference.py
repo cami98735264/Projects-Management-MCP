@@ -38,14 +38,15 @@ _OUTPUT_PATTERNS: list[tuple[RequestedOutput, str]] = [
     (RequestedOutput.SLACK, r"holgura|\bslack\b|\bfloat\b"),
     (RequestedOutput.CRITICAL_PATH, r"ruta critica|camino critico|critical path"),
     (RequestedOutput.EXPECTED_DURATION,
-     r"tiempo (minimo )?esperado|duracion (minima )?(esperada|del proyecto)|tiempo minimo|expected (project )?(duration|time)|"
+     r"tiempo (minimo )?esperado|duracion (minima |normal )?(esperada|del proyecto)|duracion normal|tiempo minimo|expected (project )?(duration|time)|"
      r"project duration|minimum (project )?duration"),
     (RequestedOutput.VARIANCE, r"varianza|variance"),
     (RequestedOutput.ACTIVITY_ESTIMATES,
      r"(tiempo esperado|varianza|expected time|variance)[^.;]{0,60}(cada actividad|por actividad|each activity|per activity)|"
      r"(cada actividad|por actividad|each activity|per activity)[^.;]{0,40}(tiempo esperado|varianza|expected time|variance)"),
     (RequestedOutput.CRASHING,
-     r"reduzca el proyecto|reducir el proyecto|comprim|acortamiento|\bcrash|costo total minimo|menor costo|minimum (total )?cost"),
+     r"reduzca el proyecto|reducir el proyecto|comprim|acortamiento|\bcrash|costo total minimo|menor costo|minimum (total )?cost|"
+     r"duracion (del proyecto )?debe planear|duracion optima|optimal (project )?duration"),
 ]
 _DELAY_RE = re.compile(
     r"(?:atrasar|retrasar|demorar)\w*\s+(?:la\s+)?actividad\s+([A-Za-z0-9]+)|actividad\s+([A-Za-z0-9]+)\s+(?:puede|podria)\s+"

@@ -39,11 +39,18 @@ class ActivityDelayAnswer(BaseModel):
     text: str
 
 
+class ProcedureStep(BaseModel):
+    number: int
+    title: str = Field(description="What the step computes, with its formula")
+    lines: list[str] = Field(default_factory=list, description="One substituted operation per line")
+
+
 class QuestionAnswer(BaseModel):
     label: str
     question: str
-    answer: str
-    procedure: str = Field(default="", description="Variables, constants and operations (with the numbers used) behind the answer")
+    answer: str = Field(description="Direct result first, as short bullet lines separated by newlines")
+    procedure: str = Field(default="", description="Numbered steps (the text form of procedure_steps)")
+    procedure_steps: list[ProcedureStep] = Field(default_factory=list)
     outputs: list[RequestedOutput] = Field(default_factory=list)
 
 

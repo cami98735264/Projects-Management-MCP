@@ -139,7 +139,7 @@
     {
       "label": "a",
       "text": "¿Cuál es la duración normal del proyecto y su costo?",
-      "outputs": ["CRITICAL_PATH", "EARLY_LATE_TIMES", "SLACK"]
+      "outputs": ["EXPECTED_DURATION", "CRITICAL_PATH", "EARLY_LATE_TIMES", "SLACK"]
     },
     {
       "label": "b",

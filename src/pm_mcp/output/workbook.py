@@ -148,6 +148,9 @@ def _frac_text_value(value: Fraction) -> str:
     return str(value.numerator) if value.denominator == 1 else excel_text(float(value), "#/###")
 
 
+RESULT_WIDTHS = (8.7, 38.7, 62.7, 88.7, 18.7)  # Resultados: Parte, Pregunta, Respuesta, Procedimiento, Valor clave
+
+
 class _Writer:
     def __init__(self, solution: ProjectSolution, path: Path):
         self.s = solution
@@ -172,6 +175,13 @@ class _Writer:
         self.f_dec = f({"num_format": "0.0000"})
         self.f_pct = f({"num_format": "0.00%"})
         self.f_wrap = f({"text_wrap": True, "valign": "top"})
+        self.f_cell = f({"text_wrap": True, "valign": "top", "border": 1})
+        self.f_label = f({"bold": True, "align": "center", "valign": "top", "border": 1, "font_size": 12})
+        self.f_answer = f({"text_wrap": True, "valign": "top", "border": 1, "bg_color": "#EAF4E4"})
+        self.f_step_title = f({"bold": True})
+        self.f_key = f({"bold": True, "align": "center", "valign": "top", "border": 1, "text_wrap": True})
+        self.f_key_int = f({"bold": True, "align": "center", "valign": "top", "border": 1, "num_format": "0"})
+        self.f_key_dec = f({"bold": True, "align": "center", "valign": "top", "border": 1, "num_format": "0.0000"})
         self.f_center = f({"align": "center", "border": 1})
         self.f_card_int = f({"num_format": "0", "align": "center", "border": 1})
         self.f_card_dec = f({"num_format": "0.0000", "align": "center", "border": 1})
@@ -1078,6 +1088,55 @@ class _Writer:
                     return "=" + _xref(cpm_name, self.cpm_rows[SheetKind.CPM][d.activity_id], 9), d.total_slack
         return None
 
+    @staticmethod
+    def _text_height(text: str, width: float) -> float:
+        """Approximate row height (points) for wrapped ``text`` in a column of ``width`` characters."""
+        chars = max(10, int(width * 1.05))
+        lines = sum(max(1, math.ceil(len(line) / chars)) for line in (text or "").split("\n"))
+        return lines * 15.0 + 6
+
+    def _result_block(self, k: SheetKind, r: int, answer: QuestionAnswer) -> int:
+        """One question: label, question, answer and key value span the block; each procedure step gets its own
+        row (bold title + one operation per line) so long procedures stay readable and never hit Excel's row cap."""
+        ws = self.ws[k]
+        steps = answer.procedure_steps or []
+        n = max(1, len(steps))
+        heights = []
+        for i in range(n):
+            if steps:
+                st = steps[i]
+                body = "\n".join("   " + line for line in st.lines)
+                title = f"{st.number}. {st.title}"
+                if st.lines:
+                    ws.write_rich_string(r - 1 + i, 3, self.f_step_title, title, self.f_cell, "\n" + body, self.f_cell)
+                else:
+                    ws.write_string(r - 1 + i, 3, title, self.f_cell)
+                heights.append(self._text_height(title + "\n" + body, RESULT_WIDTHS[3]))
+            else:
+                ws.write_blank(r - 1 + i, 3, None, self.f_cell)
+                heights.append(20.0)
+        need = max(self._text_height(answer.answer, RESULT_WIDTHS[2]),
+                   self._text_height(answer.question, RESULT_WIDTHS[1]))
+        if sum(heights) < need:
+            heights[-1] += need - sum(heights)
+        for i, h in enumerate(heights):
+            ws.set_row(r - 1 + i, min(409.0, h))
+        link = self.key_link(answer)
+        cells = [(0, answer.label, self.f_label), (1, answer.question, self.f_cell), (2, answer.answer, self.f_answer)]
+        for col, value, fmt in cells:
+            if n > 1:
+                ws.merge_range(r - 1, col, r - 2 + n, col, value, fmt)
+            else:
+                ws.write_string(r - 1, col, value, fmt)
+        if n > 1:
+            ws.merge_range(r - 1, 4, r - 2 + n, 4, "", self.f_key)
+        if link is not None:
+            self.formula(k, r, 5, link[0], link[1], self.f_key if not isinstance(link[1], (int, float, Fraction))
+                         else self.f_key_int if float(link[1]).is_integer() else self.f_key_dec)
+        elif n == 1:
+            ws.write_blank(r - 1, 4, None, self.f_key)
+        return r + n
+
     def write_results(self) -> None:
         k = SheetKind.RESULTS
         ws = self.ws[k]
@@ -1088,14 +1147,7 @@ class _Writer:
                               t(lang, "results.procedure"), t(lang, "results.key_value")])
         r = 5
         for answer in self.s.answers:
-            self.put(k, r, 1, answer.label)
-            self.put(k, r, 2, answer.question, self.f_wrap)
-            self.put(k, r, 3, answer.answer, self.f_wrap)
-            self.put(k, r, 4, answer.procedure, self.f_wrap)
-            link = self.key_link(answer)
-            if link is not None:
-                self.formula(k, r, 5, link[0], link[1])
-            r += 1
+            r = self._result_block(k, r, answer)
         r += 1
         self.put(k, r, 1, t(lang, "results.provenance"), self.f_bold)
         self.header(k, r + 1, 1, [t(lang, "provenance"), t(lang, "activities"), t(lang, "problem.field")])
@@ -1134,11 +1186,9 @@ class _Writer:
                 self.put(k, r, 1, w.code.value)
                 self.put(k, r, 2, w.message, self.f_wrap)
                 r += 1
-        ws.set_column(0, 0, 14.7)
-        ws.set_column(1, 1, 40.7)
-        ws.set_column(2, 2, 60.7)
-        ws.set_column(3, 3, 90.7)
-        ws.set_column(4, 4, 22.7)
+        for col, width in enumerate(RESULT_WIDTHS):
+            ws.set_column(col, col, width)
+        ws.freeze_panes(4, 0)
 
     # ------------------------------------------------------------------ driver
 

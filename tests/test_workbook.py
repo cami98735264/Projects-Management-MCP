@@ -97,5 +97,6 @@ def test_english_workbook(output_dir):
     result = generate_workbook(draft, "en.xlsx")
     assert result.ok and result.sheets == ["Problem", "Activity Data", "CPM", "Gantt", "Final Results"]
     procedures = {a.outputs[0]: a.procedure for a in result.answers}
-    assert "slack = LS − ES = 0" in procedures["CRITICAL_PATH"] and "A – B: Σ t = 2 + 3 = 5." in procedures["CRITICAL_PATH"]
+    assert "1. Critical activities (slack = 0)\n   A, B" in procedures["CRITICAL_PATH"]
+    assert "A → B: Σ t = 2 + 3 = 5" in procedures["CRITICAL_PATH"]
     assert "⌈T⌉ = ⌈5⌉ = 5" in procedures["GANTT"]
