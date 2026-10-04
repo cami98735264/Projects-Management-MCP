@@ -9,7 +9,7 @@ description = "MCP server exposing a deterministic CPM / PERT / Gantt / crashing
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "mcp>=1.20",
+    "mcp>=1.20,<2",
     "pydantic>=2.7",
     "xlsxwriter>=3.1",
     "openpyxl>=3.1",
