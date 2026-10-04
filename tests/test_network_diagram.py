@@ -77,3 +77,56 @@ def test_crashing_answer_reads_as_a_decision():
     titles = [s.title for s in answers["b"].procedure_steps]
     assert titles[0].startswith("Pendiente de costo") and titles[-1].startswith("Costo total")
     assert "   Paso 4: T = 26, costo directo $72.000 → se reduce E en 1 (+$1.000)" in answers["b"].procedure
+
+
+# ---------------------------------------------------------------------------------------------- cell drawing
+
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, plan_cell_network  # noqa: E402
+from pm_mcp.service import generate_workbook  # noqa: E402
+
+
+@pytest.mark.parametrize("case", ["taller1", "taller2_problema1_cpm", "taller2_problema2_pert", "pert_ejemplo_4_2",
+                                  "cpm_compresion_problema_2"])
+def test_cell_network_geometry(case):
+    cpm = _cpm(case)
+    net = plan_cell_network(cpm)
+    blocks = {(p.row + r, p.col + c) for p in net.nodes.values() for r in range(NODE_ROWS) for c in range(NODE_COLS)}
+    assert len(blocks) == len(net.nodes) * NODE_ROWS * NODE_COLS, "node blocks never overlap"
+    assert not blocks & set(net.lines), "no line is drawn over a node"
+    arrows = [(r, c) for (r, c), lc in net.lines.items() if lc.arrow]
+    assert len(arrows) == sum(len(r.successors) for r in cpm.activities), "one arrow head per arc"
+    starts = {(p.row + r, p.col) for p in net.nodes.values() for r in range(NODE_ROWS)}
+    assert all((r, c + 1) in starts for r, c in arrows), "every arrow head touches its successor's block"
+    for (r, c), lc in net.lines.items():  # every line end is matched by its neighbour (no dangling stubs)
+        for d, (dr, dc) in {"E": (0, 1), "W": (0, -1), "N": (-1, 0), "S": (1, 0)}.items():
+            if d in lc.dirs and not lc.arrow:
+                other = net.lines.get((r + dr, c + dc))
+                touches_node = (r + dr, c + dc) in blocks
+                assert touches_node or (other and {"E": "W", "W": "E", "N": "S", "S": "N"}[d] in other.dirs)
+    assert net.crossings == nd.count_crossings(cpm)
+
+
+def test_critical_arcs_are_double_red_lines():
+    net = plan_cell_network(_cpm("taller2_problema1_cpm"))   # B → E → G critical
+    crit = [lc for lc in net.lines.values() if lc.critical]
+    assert crit and all("═" in lc.text()[0] or "║" in lc.text()[0] or "╗" in lc.text()[0] or "╚" in lc.text()[0]
+                        or "╔" in lc.text()[0] or "╝" in lc.text()[0] for lc in crit)
+    assert all("═" not in lc.text()[0] for lc in net.lines.values() if not lc.critical)
+
+
+def test_workbook_network_is_cells_not_pictures(output_dir):
+    import zipfile
+
+    import openpyxl
+    draft = ProjectDraft.model_validate(json.loads(
+        (EXAMPLES / "taller2_problema2_pert" / "project_draft.json").read_text(encoding="utf-8")))
+    result = generate_workbook(draft, "red_celdas.xlsx")
+    assert result.ok and result.workbook_validation.passed
+    with zipfile.ZipFile(result.path) as book:
+        assert not [n for n in book.namelist() if n.startswith("xl/media/")]
+    sheet = openpyxl.load_workbook(result.path)["Red AON"]
+    assert not sheet._images
+    formulas = [c.value for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.startswith("='CPM'!")]
+    assert len(formulas) == 5 * 6, "every node shows t, IC, TC, IL, TL, holgura … linked to the CPM sheet"
+    arrows = [c.value for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.endswith("►")]
+    assert len(arrows) == 5 + 2  # 5 arcs + the two legend samples

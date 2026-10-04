@@ -142,8 +142,9 @@ def test_network_sheet_also_charts_the_accumulation(output_dir):
     # one network picture per week of the base plan, each row carrying that week's cost from the curve
 
 
-def test_one_network_picture_per_compression_step(output_dir):
-    """The compression process step by step: each picture is the network re-scheduled with that step's durations."""
+def test_one_cell_network_per_compression_step(output_dir):
+    """The compression process step by step: each step redraws the network (with cells, no pictures) re-scheduled
+    with that step's durations."""
     draft = crashed_draft()
     draft = draft.model_copy(update={"requested_outputs": [*draft.requested_outputs, RequestedOutput.NETWORK_DIAGRAM]})
     result = generate_workbook(draft, "pasos.xlsx")
@@ -153,8 +154,10 @@ def test_one_network_picture_per_compression_step(output_dir):
 
     wb = openpyxl.load_workbook(result.path)
     sheet = wb["Red AON por paso"]
-    assert len(sheet._images) == steps, "one picture per step, not one per calendar period"
-    assert distinct_images(result.path) == steps + 1, "every step redraws the network, plus the Red AON diagram"
+    assert len(sheet._images) == 0 and distinct_images(result.path) == 0, "networks are drawn with cells, not images"
+    arrows = sum(1 for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.endswith("►"))
+    edges = len(solve_project(normalized(draft)).network.edges)
+    assert arrows == steps * edges + 2, "one arrow head per arc in every step (+ 2 legend samples)"
     assert {"PASO 0", "PASO 1", "PASO 2"} <= {sheet.cell(r, 1).value for r in range(1, sheet.max_row + 1)}
 
     # the panel sits to the right of the picture, so find it by its labels rather than by a fixed column

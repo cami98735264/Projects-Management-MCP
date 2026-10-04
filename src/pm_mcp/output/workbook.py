@@ -8,7 +8,6 @@ it with the engine independently of xlsxwriter.
 
 from __future__ import annotations
 
-import io
 import math
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -28,7 +27,7 @@ from pm_mcp.engine.network import enumerate_paths
 from pm_mcp.i18n import t
 from pm_mcp.output.answers import OUTPUT_LABELS
 from pm_mcp.output.formula_eval import excel_text
-from pm_mcp.output.network_diagram import png_size, render_network_png
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, plan_cell_network, plan_many
 from pm_mcp.solution import ProjectSolution, QuestionAnswer
 
 
@@ -121,6 +120,10 @@ GREY = "#D9D9D9"
 CRITICAL_GREY = "#BFBFBF"
 BAR = "#4F81BD"
 TOL = "0.000000001"
+LINE_CRITICAL = "#C00000"     # critical arcs: red double lines
+LINE_ROW_HEIGHT = 15.0        # drawing rows: fixed height so the box-drawing glyphs join vertically
+NODE_COL_WIDTH = 6.7
+CHANNEL_COL_WIDTH = 2.7
 
 
 def _q(sheet: str) -> str:
@@ -197,6 +200,8 @@ class _Writer:
         self.prob_cells: dict[int, tuple[int, int]] = {}  # index in project queries → key cell
         self.crash: dict[str, Any] = {}
         self.curve: dict[str, Any] = {}
+        self._line_formats: dict[tuple[str, bool], Any] = {}
+        self._card_formats: dict[tuple, Any] = {}
 
     # ------------------------------------------------------------------ primitives
 
@@ -610,14 +615,76 @@ class _Writer:
 
     # ------------------------------------------------------------------ network pictures
 
-    def insert_png(self, kind: SheetKind, row: int, col: int, png: bytes, max_width: int = 1100) -> tuple[int, int]:
-        """Insert a picture; returns the (rows, columns) it covers at the default cell size."""
-        width, height = png_size(png)
-        scale = min(1.0, max_width / width)
-        self.ws[kind].insert_image(row - 1, col - 1, "network.png",
-                                   {"image_data": io.BytesIO(png), "x_scale": scale, "y_scale": scale,
-                                    "object_position": 3})
-        return math.ceil(height * scale / 20) + 1, math.ceil(width * scale / 64) + 1
+    def _line_format(self, align: str, critical: bool):
+        key = (align, critical)
+        if key not in self._line_formats:
+            self._line_formats[key] = self.wb.add_format({
+                "font_name": "Consolas", "font_size": 14, "align": align, "valign": "vcenter",
+                "font_color": LINE_CRITICAL if critical else "#000000", "bold": critical})
+        return self._line_formats[key]
+
+    def _card_format(self, value: Any, critical: bool, bold: bool = False):
+        integral = isinstance(value, (int, float, Fraction)) and float(value).is_integer()
+        key = (critical, bold, "text" if bold else ("int" if integral else "dec"))
+        if key not in self._card_formats:
+            spec: dict[str, Any] = {"align": "center", "valign": "vcenter", "border": 1}
+            if bold:
+                spec["bold"] = True
+            else:
+                spec["num_format"] = "0" if integral else "0.0000"
+            if critical:
+                spec["bg_color"] = CRITICAL_GREY
+            self._card_formats[key] = self.wb.add_format(spec)
+        return self._card_formats[key]
+
+    def draw_cell_network(self, kind: SheetKind, net: CellNetwork, schedule: CpmResult, r0: int, c0: int,
+                          linked: bool) -> None:
+        """Draw ``net`` with its top-left corner at (r0, c0) (1-based). Node cells are formulas linked to the CPM
+        sheet when ``linked`` (the main network), plain values otherwise (one network per crashing step)."""
+        ws = self.ws[kind]
+        rows = schedule.by_id()
+        cpm_name = self.name(SheetKind.CPM) if linked else None
+        cpm_rows = self.cpm_rows.get(SheetKind.CPM, {}) if linked else {}
+        for r in range(net.height):
+            ws.set_row(r0 - 1 + r, LINE_ROW_HEIGHT)
+        for (r, c), line in sorted(net.lines.items()):
+            text, align = line.text()
+            ws.write_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, line.critical))
+        for place in net.nodes.values():
+            row = rows[place.activity_id]
+            r, c = r0 + place.row, c0 + place.col
+            static_grey = place.critical and not linked
+            cells = [(0, 0, row.activity_id, 0), (0, 1, row.duration, 4), (1, 0, row.early_start, 5),
+                     (1, 1, row.early_finish, 6), (2, 0, row.late_start, 7), (2, 1, row.late_finish, 8)]
+            for dr, dc, value, src_col in cells:
+                if isinstance(value, str):
+                    self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey, bold=True))
+                elif linked:
+                    self.formula(kind, r + dr, c + dc, "=" + _xref(cpm_name, cpm_rows[place.activity_id], src_col),
+                                 value, self._card_format(value, False))
+                else:
+                    self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey))
+            slack_fmt = self._card_format(row.total_slack, static_grey)
+            ws.merge_range(r + 2, c - 1, r + 2, c, "", slack_fmt)
+            if linked:
+                self.formula(kind, r + 3, c, "=" + _xref(cpm_name, cpm_rows[place.activity_id], 9), row.total_slack,
+                             slack_fmt)
+                self.grey_rule(kind, (r, c), (r + NODE_ROWS - 1, c + NODE_COLS - 1),
+                               f"ABS({_cell(r + 3, c, True)})<{TOL}")
+            else:
+                self.put(kind, r + 3, c, row.total_slack, slack_fmt)
+        node_starts = {c0 + x for x in net.node_columns}
+        for c in range(net.width):
+            col = c0 + c
+            in_node = any(s <= col < s + NODE_COLS for s in node_starts)
+            ws.set_column(col - 1, col - 1, NODE_COL_WIDTH if in_node else CHANNEL_COL_WIDTH)
+
+    def _network_legend(self, k: SheetKind, row: int) -> None:
+        self.put(k, row, 2, t(self.lang, "network.lines"), self.f_bold)
+        self.ws[k].write_string(row, 1, "═════►", self._line_format("left", True))
+        self.put(k, row + 1, 5, t(self.lang, "network.critical_line"))
+        self.ws[k].write_string(row + 1, 1, "─────►", self._line_format("left", False))
+        self.put(k, row + 2, 5, t(self.lang, "network.normal_line"))
 
     def write_network(self) -> None:
         k = SheetKind.NETWORK
@@ -636,29 +703,12 @@ class _Writer:
             self.put(k, 4 + i, 5, f"{t(self.lang, kl)}  |  {t(self.lang, kr)}")
         ws.merge_range(6, 1, 6, 2, t(self.lang, "slack"), self.f_card_name)
         self.put(k, 7, 5, t(self.lang, "network.legend.slack"))
-        self.put(k, 9, 2, t(self.lang, "network.image_note"))
-        png = render_network_png(schedule, self.lang)
-        image_rows, _ = self.insert_png(k, 10, 2, png)
-
-        from pm_mcp.output.network_diagram import layout
-        pos = layout(schedule)
-        n_cols = max(c for c, _ in pos.values()) + 1
-        r0 = 10 + image_rows + 1
+        self._network_legend(k, 8)
+        net = plan_cell_network(schedule)
+        r0 = 13
         self.put(k, r0 - 1, 2, t(self.lang, "network.cards"), self.f_bold)
-        for row in schedule.activities:
-            gc, gr = pos[row.activity_id]
-            r, c = r0 + 5 * gr, 2 + 3 * gc
-            src = cpm_rows[row.activity_id]
-            self.put(k, r, c, row.activity_id, self.f_card_name)
-            self.formula(k, r, c + 1, "=" + _xref(cpm_name, src, 4), row.duration, self.numfmt(row.duration, True))
-            self.formula(k, r + 1, c, "=" + _xref(cpm_name, src, 5), row.early_start, self.numfmt(row.early_start, True))
-            self.formula(k, r + 1, c + 1, "=" + _xref(cpm_name, src, 6), row.early_finish, self.numfmt(row.early_finish, True))
-            self.formula(k, r + 2, c, "=" + _xref(cpm_name, src, 7), row.late_start, self.numfmt(row.late_start, True))
-            self.formula(k, r + 2, c + 1, "=" + _xref(cpm_name, src, 8), row.late_finish, self.numfmt(row.late_finish, True))
-            ws.merge_range(r + 2, c - 1, r + 2, c, "", self.f_center)
-            self.formula(k, r + 3, c, "=" + _xref(cpm_name, src, 9), row.total_slack, self.numfmt(row.total_slack, True))
-            self.grey_rule(k, (r, c), (r + 3, c + 1), f"ABS({_cell(r + 3, c, True)})<{TOL}")
-        arc_col = 2 + 3 * n_cols + 1
+        self.draw_cell_network(k, net, schedule, r0 + 1, 2, linked=True)
+        arc_col = 2 + net.width + 2
         self.put(k, r0 - 1, arc_col, t(self.lang, "network.arcs"), self.f_bold)
         self.header(k, r0, arc_col, [t(self.lang, "network.from"), t(self.lang, "network.to"),
                                      t(self.lang, "network.critical_arc")])
@@ -669,9 +719,6 @@ class _Writer:
             self.put(k, r0 + 1 + i, arc_col, e.from_id)
             self.put(k, r0 + 1 + i, arc_col + 1, e.to_id)
             self.put(k, r0 + 1 + i, arc_col + 2, t(self.lang, "yes" if critical else "no"))
-        for gc in range(n_cols):
-            ws.set_column(1 + 3 * gc, 2 + 3 * gc, 8.7)
-            ws.set_column(3 + 3 * gc, 3 + 3 * gc, 4.7)
         ws.set_column(arc_col - 1, arc_col + 1, 12.7)
         if self.s.cost_curve is not None and self.has(SheetKind.COST_CURVE):
             note_col = arc_col + 4
@@ -806,14 +853,17 @@ class _Writer:
         self.put(k, 2, 1, t(self.lang, "step.note", sheet=crash_name))
         self.put(k, 3, 1, t(self.lang, "step.legend"))
         slopes = {s.activity_id: s.slope for s in c.slopes}
-        r = 5
+        self._network_legend(k, 4)
+        r = 8
         previous = None
-        for st in c.states:
+        plans = plan_many([st.schedule for st in c.states])
+        for st, net in zip(c.states, plans):
             self.put(k, r, 1, t(self.lang, "step.label", step=st.step), self.f_bold)
             caption = t(self.lang, "step.caption", step=st.step, duration=number_text(st.project_duration), plural=self.plural)
-            png = render_network_png(st.schedule, self.lang, caption=caption)
-            image_rows, image_cols = self.insert_png(k, r + 1, 2, png, max_width=900)
-            pc = 2 + image_cols
+            self.put(k, r, 3, caption, self.f_bold)
+            self.draw_cell_network(k, net, st.schedule, r + 2, 2, linked=False)
+            image_rows = net.height + 2
+            pc = 2 + net.width + 2
             pr = r + 1
             srow = info["state_row"][st.step]
             self.put(k, pr, pc, t(self.lang, "step.duration", plural=self.plural), self.f_bold)
@@ -860,6 +910,7 @@ class _Writer:
                 slope = sum((slopes[a] for a in st.next_crash_activities), Fraction(0))
                 self.put(k, pr, pc, t(self.lang, "step.next", activities=", ".join(st.next_crash_activities),
                                       slope=number_text(slope), unit=self.singular))
+            ws.set_column(pc - 2, pc - 2, CHANNEL_COL_WIDTH)
             ws.set_column(pc - 1, pc - 1, 38)
             ws.set_column(pc, pc, 14)
             r = max(r + 1 + image_rows, pr) + 2

@@ -49,7 +49,7 @@ The findings, with the source image of each rule, are persisted in `src/pm_mcp/r
 | Normal distribution | `math.erfc` plus Acklam with 2 Halley refinements | No lookup tables. Tested against known Z values and scipy (rel. 1e-12). |
 | Workbook writer | **xlsxwriter** | It can write formula *and* cached result, so files show correct numbers even in viewers that don't recalculate. Output is reproducible byte for byte. |
 | Workbook validation | **openpyxl** plus our own formula evaluator | Reading with a *different* library than the writer, and re-evaluating every formula, makes the check independent of how the file was written. |
-| Diagram | matplotlib (Agg, object API) | Renders the six-cell AON node notation. |
+| Diagram | worksheet cells (no pictures) | Nodes are bordered 2 × 4 cell blocks linked to the CPM sheet; arcs are box-drawing characters in narrow channel columns ending in ►, critical arcs as red double lines. |
 | Crashing | networkx min-cut | Finds the cheapest set of activities that shortens *all* critical paths. |
 
 ## 3. Layout
@@ -78,7 +78,8 @@ src/pm_mcp/
   output/   workbook.py           sheet planning + live-formula writer
             formula_eval.py       Excel formula evaluator (whitelisted grammar)
             workbook_validation.py round-trip validation
-            network_diagram.py    AON drawing: layered layout, exact crossing minimisation, straight critical path
+            network_diagram.py    AON layout: layers, exact crossing minimisation, straight critical path
+            network_cells.py      the layout drawn with cells: node blocks, routed arcs (─│┌┐…►), red double critical arcs
             answers.py            per-question answer (direct result first, bullet lines) and numbered procedure steps
   reference/ inventory.json       machine-generated inventory of the reference files
             methodology.json      curated classification + methodology rules with sources
@@ -203,11 +204,11 @@ Sheets are planned by `plan_sheets(project, outputs)`:
 | PERT | schedule outputs **and** three-point data | `=(a+b+4*m)/6`, `=((b-a)/6)^2`, fractions, working, critical flag, Σσ² as `=F5+F7+…`, `=SQRT()` |
 | CPM | any schedule-dependent output | Live forward/backward pass: `=MAX(TC preds)`, `=MIN(IL succs)`, `=ROUND(IL-IC,10)`, critical flag; grey conditional formatting |
 | CPM determinístico | method BOTH | Same, on deterministic durations |
-| Red AON | NETWORK_DIAGRAM | Node legend, rendered diagram, six-cell node cards (formulas to CPM), arc list |
+| Red AON | NETWORK_DIAGRAM | Node and arrow legend; the network drawn with cells only (no images): node blocks whose six cells are formulas to CPM, arcs routed with box-drawing characters and ► heads, critical arcs as red double lines, critical nodes shaded; arc list |
 | Gantt | GANTT | Two rows per activity, week columns, bar cells `=IF(AND(…),"█","")` with fill, Observaciones formula |
 | Probabilidad | probability or percentile queries | t_e, σ², σ links; per query Z, `NORMSDIST`, table Z and Φ, probability; `NORMSINV`, T_p, `ROUNDUP` |
 | Compresión / Crashing | CRASHING | Slope formulas, step table with chained cost formulas, direct/indirect/total summary, optimum check, and a **cost-against-duration chart** over that summary |
-| Red AON por paso / Network per step | NETWORK_DIAGRAM **and** CRASHING | One AON diagram **per compression step**: the same network re-scheduled with that step's durations, so every node's t, IC \| TC, IL \| TL and slack are the step's own and the critical path moves with them. Beside each picture, a panel linked to the compression sheet (project duration, activity shortened to reach the step, direct-cost increase paid, direct / indirect / total cost, length of every route) and one sentence saying what was shortened and what is shortened next |
+| Red AON por paso / Network per step | NETWORK_DIAGRAM **and** CRASHING | One AON network **per compression step**, drawn with cells: the same network re-scheduled with that step's durations, so every node's t, IC \| TC, IL \| TL and slack are the step's own and the critical path moves with them. Beside each network, a panel linked to the compression sheet (project duration, activity shortened to reach the step, direct-cost increase paid, direct / indirect / total cost, length of every route) and one sentence saying what was shortened and what is shortened next |
 | Curva de costos / Cost curve | schedule outputs **and** a duration + cost for every activity | Per-activity cost and cost per period (linked to Compresión or Datos), a row per period with the activities in progress, that period's cost and the cumulative cost, a self-check `=acumulado−total`, and a combined **S-curve** chart (cumulative line + per-period columns, repeated on the Red AON sheet) |
 | Resultados / Final Results | always | One block per question: the answer as short bullet lines (direct result first), the **Procedimiento** as numbered steps — one row per step, bold title with the formula and one substituted operation per line — and a **linked key value**; provenance counts; assumptions; the independent check table; warnings |
 
