@@ -100,3 +100,24 @@ def test_english_workbook(output_dir):
     assert "1. Critical activities (slack = 0)\n   A, B" in procedures["CRITICAL_PATH"]
     assert "A → B: Σ t = 2 + 3 = 5" in procedures["CRITICAL_PATH"]
     assert "⌈T⌉ = ⌈5⌉ = 5" in procedures["GANTT"]
+
+
+def test_no_bold_anywhere(output_dir):
+    """Plain look: no cell font and no chart title/axis name is bold."""
+    import json
+    import zipfile
+    from pathlib import Path
+
+    examples = Path(__file__).resolve().parents[1] / "examples"
+    for case in ("taller2_problema1_cpm", "taller2_problema2_pert"):
+        draft = ProjectDraft.model_validate(json.loads((examples / case / "project_draft.json").read_text(encoding="utf-8")))
+        result = generate_workbook(draft, f"{case}_plain.xlsx", overwrite=True)
+        assert result.ok
+        book = openpyxl.load_workbook(result.path)
+        bold = [(ws.title, c.coordinate) for ws in book.worksheets for row in ws.iter_rows() for c in row
+                if c.value is not None and c.font is not None and c.font.b]
+        assert not bold, bold[:5]
+        with zipfile.ZipFile(result.path) as z:
+            for name in z.namelist():
+                if name.startswith("xl/charts/"):
+                    assert ' b="1"' not in z.read(name).decode("utf-8"), name

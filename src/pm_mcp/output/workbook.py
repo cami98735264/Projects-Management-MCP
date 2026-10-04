@@ -170,25 +170,24 @@ class _Writer:
         self.ws = {k: self.wb.add_worksheet(self.names[k]) for k in self.plan}
         self.expected: dict[tuple[str, int, int], Any] = {}
         self.notes: list[str] = []
-        f = self.wb.add_format
-        self.f_title = f({"bold": True, "font_size": 13})
-        self.f_bold = f({"bold": True})
-        self.f_head = f({"bold": True, "bg_color": GREY, "border": 1, "text_wrap": True, "valign": "top"})
+        f = self._format
+        self.f_title = f({"font_size": 13})
+        self.f_heading = f({})
+        self.f_head = f({"bg_color": GREY, "border": 1, "text_wrap": True, "valign": "top"})
         self.f_int = f({"num_format": "0"})
         self.f_dec = f({"num_format": "0.0000"})
         self.f_pct = f({"num_format": "0.00%"})
         self.f_wrap = f({"text_wrap": True, "valign": "top"})
         self.f_cell = f({"text_wrap": True, "valign": "top", "border": 1})
-        self.f_label = f({"bold": True, "align": "center", "valign": "top", "border": 1, "font_size": 12})
+        self.f_label = f({"align": "center", "valign": "top", "border": 1, "font_size": 12})
         self.f_answer = f({"text_wrap": True, "valign": "top", "border": 1, "bg_color": "#EAF4E4"})
-        self.f_step_title = f({"bold": True})
-        self.f_key = f({"bold": True, "align": "center", "valign": "top", "border": 1, "text_wrap": True})
-        self.f_key_int = f({"bold": True, "align": "center", "valign": "top", "border": 1, "num_format": "0"})
-        self.f_key_dec = f({"bold": True, "align": "center", "valign": "top", "border": 1, "num_format": "0.0000"})
+        self.f_key = f({"align": "center", "valign": "top", "border": 1, "text_wrap": True})
+        self.f_key_int = f({"align": "center", "valign": "top", "border": 1, "num_format": "0"})
+        self.f_key_dec = f({"align": "center", "valign": "top", "border": 1, "num_format": "0.0000"})
         self.f_center = f({"align": "center", "border": 1})
         self.f_card_int = f({"num_format": "0", "align": "center", "border": 1})
         self.f_card_dec = f({"num_format": "0.0000", "align": "center", "border": 1})
-        self.f_card_name = f({"bold": True, "align": "center", "border": 1})
+        self.f_card_name = f({"align": "center", "border": 1})
         self.f_crit = f({"bg_color": CRITICAL_GREY})
         self.f_bar = f({"bg_color": BAR, "font_color": BAR})
         self.f_bar_cell = f({"align": "center"})
@@ -204,6 +203,10 @@ class _Writer:
         self._card_formats: dict[tuple, Any] = {}
 
     # ------------------------------------------------------------------ primitives
+
+    def _format(self, spec: dict[str, Any]):
+        """Every cell format goes through here: nothing in the workbook is bold (plain, hand-made look)."""
+        return self.wb.add_format({**spec, "bold": False})
 
     def has(self, kind: SheetKind) -> bool:
         return kind in self.ws
@@ -317,14 +320,14 @@ class _Writer:
         title = "title.cpm_pert" if pert_based else "title.cpm_det"
         self.put(kind, 1, 1, t(self.lang, title), self.f_title)
         label = "expected_project_duration" if pert_based else "project_duration"
-        self.put(kind, 2, 1, f"{t(self.lang, label)} ({self.plural})", self.f_bold)
+        self.put(kind, 2, 1, f"{t(self.lang, label)} ({self.plural})", self.f_heading)
         ends = [r for r in schedule.activities if not r.successors]
         self.formula(kind, 2, 4, "=MAX(" + ",".join(_cell(rows[r.activity_id], 6) for r in ends) + ")",
                      schedule.project_duration)
         paths = "; ".join(" – ".join(p) for p in schedule.critical_paths)
         self.put(kind, 3, 1, t(self.lang, "critical_path" if len(schedule.critical_paths) == 1 else "critical_paths"),
-                 self.f_bold)
-        self.put(kind, 3, 4, paths, self.f_bold)
+                 self.f_heading)
+        self.put(kind, 3, 4, paths, self.f_heading)
         dur_head = f"{t(self.lang, 'duration')} (t_e)" if pert_based else f"{t(self.lang, 'duration')} ({self.plural})"
         self.header(kind, 5, 1, [t(self.lang, "activity"), t(self.lang, "predecessors"), t(self.lang, "successors"),
                                  dur_head, t(self.lang, "es"), t(self.lang, "ef"), t(self.lang, "ls"), t(self.lang, "lf"),
@@ -373,7 +376,7 @@ class _Writer:
         ws = self.ws[k]
         pert, var = self.s.pert, self.s.variance
         self.put(k, 1, 1, t(self.lang, "title.pert"), self.f_title)
-        self.put(k, 2, 1, f"{t(self.lang, 'pert.formula_te')}        {t(self.lang, 'pert.formula_var')}", self.f_bold)
+        self.put(k, 2, 1, f"{t(self.lang, 'pert.formula_te')}        {t(self.lang, 'pert.formula_var')}", self.f_heading)
         self.header(k, 5, 1, [t(self.lang, "activity"), "a", "m", "b", "t_e = (a + b + 4m)/6", "σ² = [(b − a)/6]²",
                               t(self.lang, "pert.te_fraction"), t(self.lang, "pert.var_fraction"),
                               t(self.lang, "pert.te_calc"), t(self.lang, "pert.var_calc"), t(self.lang, "critical")])
@@ -403,28 +406,28 @@ class _Writer:
         self.grey_rule(k, (6, 1), (last, 11), f'$K6="{yes}"')
         if var is not None:
             r = last + 2
-            self.put(k, r, 1, t(self.lang, "pert.path_used"), self.f_bold)
-            self.put(k, r, 5, " – ".join(var.selected_activities), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "pert.path_used"), self.f_heading)
+            self.put(k, r, 5, " – ".join(var.selected_activities), self.f_heading)
             r += 1
-            self.put(k, r, 1, t(self.lang, "pert.project_variance"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "pert.project_variance"), self.f_heading)
             terms = [_cell(self.pert_row[a], 6) for a in var.selected_activities]
             self.formula(k, r, 6, "=" + ("+".join(terms) if terms else "0"), var.total_variance)
             self.put(k, r, 7, fraction_text(var.total_variance))
             self.put(k, r, 9, var.variance_working)
             self.pert_var_cell = (r, 6)
             r += 1
-            self.put(k, r, 1, t(self.lang, "pert.project_std"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "pert.project_std"), self.f_heading)
             self.formula(k, r, 6, f"=SQRT({_cell(r - 1, 6)})", var.standard_deviation)
             self.put(k, r, 9, var.standard_deviation_working)
             r += 1
-            self.put(k, r, 1, t(self.lang, "expected_project_duration"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "expected_project_duration"), self.f_heading)
             if self.has(SheetKind.CPM):
                 self.formula(k, r, 5, "=" + _xref(self.name(SheetKind.CPM), 2, 4), self.s.cpm.project_duration)
             else:
                 self.put(k, r, 5, self.s.cpm.project_duration)
             if len(var.critical_paths) > 1:
                 r += 2
-                self.put(k, r, 1, t(self.lang, "pert.path_variances"), self.f_bold)
+                self.put(k, r, 1, t(self.lang, "pert.path_variances"), self.f_heading)
                 self.put(k, r, 5, t(self.lang, f"pert.strategy.{var.strategy.value}"))
                 for pv in var.critical_paths:
                     r += 1
@@ -444,14 +447,14 @@ class _Writer:
         ws = self.ws[k]
         var = self.s.variance
         self.put(k, 1, 1, t(self.lang, "title.probability"), self.f_title)
-        self.put(k, 3, 1, t(self.lang, "prob.params"), self.f_bold)
+        self.put(k, 3, 1, t(self.lang, "prob.params"), self.f_heading)
         self.put(k, 4, 1, t(self.lang, "expected_project_duration"))
         self.formula(k, 4, 3, "=" + _xref(self.name(SheetKind.CPM), 2, 4), self.s.cpm.project_duration)
         self.put(k, 5, 1, "σ² (Σ σ²)")
         self.formula(k, 5, 3, "=" + _xref(self.name(SheetKind.PERT), *self.pert_var_cell), var.total_variance)
         self.put(k, 6, 1, "σ = √σ²")
         self.formula(k, 6, 3, "=SQRT(C5)", var.standard_deviation)
-        self.put(k, 7, 1, t(self.lang, "prob.z_formula"), self.f_bold)
+        self.put(k, 7, 1, t(self.lang, "prob.z_formula"), self.f_heading)
         self.put(k, 8, 1, t(self.lang, "prob.table_note"))
         degenerate = var.standard_deviation == 0
         index_of = {id(q): i for i, q in enumerate(self.p.probability_queries)}
@@ -498,7 +501,7 @@ class _Writer:
                 self.prob_cells[qi] = (first, 9 if res.method.value == "table" else 8)
             r += 1
         if self.s.percentiles:
-            self.put(k, r, 1, t(self.lang, "prob.percentiles"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "prob.percentiles"), self.f_heading)
             r += 1
             self.header(k, r, 1, [t(self.lang, "prob.question"), t(self.lang, "prob.target"), t(self.lang, "prob.z_exact"),
                                   t(self.lang, "prob.tp_exact"), t(self.lang, "prob.z_table"), t(self.lang, "prob.cdf_table"),
@@ -618,23 +621,21 @@ class _Writer:
     def _line_format(self, align: str, critical: bool):
         key = (align, critical)
         if key not in self._line_formats:
-            self._line_formats[key] = self.wb.add_format({
+            self._line_formats[key] = self._format({
                 "font_name": "Consolas", "font_size": 14, "align": align, "valign": "vcenter",
-                "font_color": LINE_CRITICAL if critical else "#000000", "bold": critical})
+                "font_color": LINE_CRITICAL if critical else "#000000"})
         return self._line_formats[key]
 
-    def _card_format(self, value: Any, critical: bool, bold: bool = False):
+    def _card_format(self, value: Any, critical: bool, text: bool = False):
         integral = isinstance(value, (int, float, Fraction)) and float(value).is_integer()
-        key = (critical, bold, "text" if bold else ("int" if integral else "dec"))
+        key = (critical, "text" if text else ("int" if integral else "dec"))
         if key not in self._card_formats:
             spec: dict[str, Any] = {"align": "center", "valign": "vcenter", "border": 1}
-            if bold:
-                spec["bold"] = True
-            else:
+            if not text:
                 spec["num_format"] = "0" if integral else "0.0000"
             if critical:
                 spec["bg_color"] = CRITICAL_GREY
-            self._card_formats[key] = self.wb.add_format(spec)
+            self._card_formats[key] = self._format(spec)
         return self._card_formats[key]
 
     def draw_cell_network(self, kind: SheetKind, net: CellNetwork, schedule: CpmResult, r0: int, c0: int,
@@ -658,7 +659,7 @@ class _Writer:
                      (1, 1, row.early_finish, 6), (2, 0, row.late_start, 7), (2, 1, row.late_finish, 8)]
             for dr, dc, value, src_col in cells:
                 if isinstance(value, str):
-                    self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey, bold=True))
+                    self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey, text=True))
                 elif linked:
                     self.formula(kind, r + dr, c + dc, "=" + _xref(cpm_name, cpm_rows[place.activity_id], src_col),
                                  value, self._card_format(value, False))
@@ -680,7 +681,7 @@ class _Writer:
             ws.set_column(col - 1, col - 1, NODE_COL_WIDTH if in_node else CHANNEL_COL_WIDTH)
 
     def _network_legend(self, k: SheetKind, row: int) -> None:
-        self.put(k, row, 2, t(self.lang, "network.lines"), self.f_bold)
+        self.put(k, row, 2, t(self.lang, "network.lines"), self.f_heading)
         self.ws[k].write_string(row, 1, "═════►", self._line_format("left", True))
         self.put(k, row + 1, 5, t(self.lang, "network.critical_line"))
         self.ws[k].write_string(row + 1, 1, "─────►", self._line_format("left", False))
@@ -693,7 +694,7 @@ class _Writer:
         schedule = self.s.cpm
         cpm_name, cpm_rows = self.name(SheetKind.CPM), self.cpm_rows[SheetKind.CPM]
         self.put(k, 1, 1, t(self.lang, "title.network"), self.f_title)
-        self.put(k, 3, 2, t(self.lang, "network.legend"), self.f_bold)
+        self.put(k, 3, 2, t(self.lang, "network.legend"), self.f_heading)
         legend = [((x["card_act"], x["card_t"]), ("network.legend.name", "network.legend.duration")),
                   ((x["card_es"], x["card_ef"]), ("network.legend.es", "network.legend.ef")),
                   ((x["card_ls"], x["card_lf"]), ("network.legend.ls", "network.legend.lf"))]
@@ -706,10 +707,10 @@ class _Writer:
         self._network_legend(k, 8)
         net = plan_cell_network(schedule)
         r0 = 13
-        self.put(k, r0 - 1, 2, t(self.lang, "network.cards"), self.f_bold)
+        self.put(k, r0 - 1, 2, t(self.lang, "network.cards"), self.f_heading)
         self.draw_cell_network(k, net, schedule, r0 + 1, 2, linked=True)
         arc_col = 2 + net.width + 2
-        self.put(k, r0 - 1, arc_col, t(self.lang, "network.arcs"), self.f_bold)
+        self.put(k, r0 - 1, arc_col, t(self.lang, "network.arcs"), self.f_heading)
         self.header(k, r0, arc_col, [t(self.lang, "network.from"), t(self.lang, "network.to"),
                                      t(self.lang, "network.critical_arc")])
         rows = schedule.by_id()
@@ -733,7 +734,7 @@ class _Writer:
         c = self.s.crashing
         real = [a for a in self.p.activities if not a.is_dummy]
         self.put(k, 1, 1, t(self.lang, "title.crashing"), self.f_title)
-        self.put(k, 2, 1, t(self.lang, "crash.slopes"), self.f_bold)
+        self.put(k, 2, 1, t(self.lang, "crash.slopes"), self.f_heading)
         self.header(k, 4, 1, [t(self.lang, "activity"), t(self.lang, "predecessors"), f"{t(self.lang, 'duration')} (Dn)",
                               f"{t(self.lang, 'normal_cost')} (Cn)", f"{t(self.lang, 'crash_duration')} (Dc)",
                               f"{t(self.lang, 'crash_cost')} (Cc)", t(self.lang, "crash.slope"),
@@ -759,11 +760,11 @@ class _Writer:
             self.formula(k, r, 8, f"=C{r}-E{r}", s.max_reduction)
         last = 4 + len(real)
         sum_row = last + 1
-        self.put(k, sum_row, 1, t(self.lang, "crash.normal_cost_total"), self.f_bold)
+        self.put(k, sum_row, 1, t(self.lang, "crash.normal_cost_total"), self.f_heading)
         self.formula(k, sum_row, 4, f"=SUM(D5:D{last})", c.normal_direct_cost)
 
         r = sum_row + 2
-        self.put(k, r, 1, t(self.lang, "crash.steps"), self.f_bold)
+        self.put(k, r, 1, t(self.lang, "crash.steps"), self.f_heading)
         r += 1
         self.header(k, r, 1, [t(self.lang, "crash.step"), f"{t(self.lang, 'duration')} ({self.plural})",
                               t(self.lang, "crash.direct_cost"), t(self.lang, "critical_paths"),
@@ -790,7 +791,7 @@ class _Writer:
         r += 1
         self.put(k, r, 1, f"{t(self.lang, 'crash.stop_reason')}: {c.stop_reason}")
         r += 2
-        self.put(k, r, 1, t(self.lang, "crash.summary"), self.f_bold)
+        self.put(k, r, 1, t(self.lang, "crash.summary"), self.f_heading)
         r += 1
         self.header(k, r, 1, [f"{t(self.lang, 'duration')} ({self.plural})", t(self.lang, "crash.direct_cost"),
                               t(self.lang, "crash.indirect_cost"), t(self.lang, "crash.total_cost")])
@@ -811,10 +812,10 @@ class _Writer:
         min_cell = None
         if c.optimal is not None:
             r += 2
-            self.put(k, r, 1, t(self.lang, "crash.optimal"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "crash.optimal"), self.f_heading)
             self.put(k, r, 4, c.optimal.project_duration)
             r += 1
-            self.put(k, r, 1, t(self.lang, "crash.min_total_check"), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "crash.min_total_check"), self.f_heading)
             self.formula(k, r, 4, f"=MIN(D{first_summary}:D{last_summary})", c.optimal.total_cost)
             min_cell = (r, 4)
         chart = self.wb.add_chart({"type": "scatter", "subtype": "straight_with_markers"})
@@ -827,9 +828,9 @@ class _Writer:
                               "categories": [name, first_summary - 1, 0, last_summary - 1, 0],
                               "values": [name, first_summary - 1, col - 1, last_summary - 1, col - 1],
                               "marker": {"type": "circle"}})
-        chart.set_title({"name": t(self.lang, "crash.chart_title")})
-        chart.set_x_axis({"name": t(self.lang, "crash.chart_x", plural=self.plural)})
-        chart.set_y_axis({"name": t(self.lang, "crash.chart_y")})
+        chart.set_title({"name": t(self.lang, "crash.chart_title"), "name_font": {"bold": False}})
+        chart.set_x_axis({"name": t(self.lang, "crash.chart_x", plural=self.plural), "name_font": {"bold": False}})
+        chart.set_y_axis({"name": t(self.lang, "crash.chart_y"), "name_font": {"bold": False}})
         chart.set_legend({"position": "bottom"})
         ws.insert_chart(first_summary - 2, 5, chart, {"x_scale": 1.3, "y_scale": 1.2})
         self.crash = {"slope_row": slope_row, "state_row": state_row, "summary_row": summary_row,
@@ -858,40 +859,40 @@ class _Writer:
         previous = None
         plans = plan_many([st.schedule for st in c.states])
         for st, net in zip(c.states, plans):
-            self.put(k, r, 1, t(self.lang, "step.label", step=st.step), self.f_bold)
+            self.put(k, r, 1, t(self.lang, "step.label", step=st.step), self.f_heading)
             caption = t(self.lang, "step.caption", step=st.step, duration=number_text(st.project_duration), plural=self.plural)
-            self.put(k, r, 3, caption, self.f_bold)
+            self.put(k, r, 3, caption, self.f_heading)
             self.draw_cell_network(k, net, st.schedule, r + 2, 2, linked=False)
             image_rows = net.height + 2
             pc = 2 + net.width + 2
             pr = r + 1
             srow = info["state_row"][st.step]
-            self.put(k, pr, pc, t(self.lang, "step.duration", plural=self.plural), self.f_bold)
+            self.put(k, pr, pc, t(self.lang, "step.duration", plural=self.plural), self.f_heading)
             self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow, 2), st.project_duration)
             pr += 1
-            self.put(k, pr, pc, t(self.lang, "step.reduced"), self.f_bold)
+            self.put(k, pr, pc, t(self.lang, "step.reduced"), self.f_heading)
             self.put(k, pr, pc + 1, ", ".join(previous.next_crash_activities) if previous else "—")
             pr += 1
-            self.put(k, pr, pc, t(self.lang, "step.increase"), self.f_bold)
+            self.put(k, pr, pc, t(self.lang, "step.increase"), self.f_heading)
             if previous is not None:
                 self.formula(k, pr, pc + 1, "=" + _xref(crash_name, info["state_row"][previous.step], 7),
                              previous.next_cost_increase)
             else:
                 self.put(k, pr, pc + 1, 0)
             pr += 1
-            self.put(k, pr, pc, t(self.lang, "crash.direct_cost"), self.f_bold)
+            self.put(k, pr, pc, t(self.lang, "crash.direct_cost"), self.f_heading)
             self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow, 3), st.direct_cost)
             point = next((p for p in c.cost_table if p.project_duration == st.project_duration), None)
             if point is not None and point.indirect_cost is not None:
                 srow2 = info["summary_row"][st.project_duration]
                 pr += 1
-                self.put(k, pr, pc, t(self.lang, "crash.indirect_cost"), self.f_bold)
+                self.put(k, pr, pc, t(self.lang, "crash.indirect_cost"), self.f_heading)
                 self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow2, 3), point.indirect_cost)
                 pr += 1
-                self.put(k, pr, pc, t(self.lang, "crash.total_cost"), self.f_bold)
+                self.put(k, pr, pc, t(self.lang, "crash.total_cost"), self.f_heading)
                 self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow2, 4), point.total_cost)
             pr += 1
-            self.put(k, pr, pc, t(self.lang, "step.routes"), self.f_bold)
+            self.put(k, pr, pc, t(self.lang, "step.routes"), self.f_heading)
             for path in enumerate_paths(self.s.network):
                 pr += 1
                 length = sum((st.durations[a] for a in path), Fraction(0))
@@ -933,7 +934,7 @@ class _Writer:
                       plural=self.unit.label(curve.basis_duration, self.lang))
         self.put(k, 2, 1, basis)
         self.put(k, 3, 1, t(self.lang, "cost.note", unit=unit))
-        self.put(k, 4, 1, t(self.lang, "cost.per_activity", unit=unit), self.f_bold)
+        self.put(k, 4, 1, t(self.lang, "cost.per_activity", unit=unit), self.f_heading)
         self.header(k, 5, 1, [t(self.lang, "activity"), t(self.lang, "duration"), t(self.lang, "cost.activity_cost"),
                               t(self.lang, "cost.cost_per_unit", unit=unit), t(self.lang, "es"), t(self.lang, "ef")])
         rows: dict[str, int] = {}
@@ -962,11 +963,11 @@ class _Writer:
             self.put(k, r, 6, a.early_finish)
         last = 5 + len(curve.activities)
         total_row = last + 1
-        self.put(k, total_row, 1, t(self.lang, "cost.project_total"), self.f_bold)
+        self.put(k, total_row, 1, t(self.lang, "cost.project_total"), self.f_heading)
         self.formula(k, total_row, 3, f"=SUM(C6:C{last})", curve.total_cost)
 
         r = total_row + 2
-        self.put(k, r, 1, t(self.lang, "cost.accumulation", unit=unit), self.f_bold)
+        self.put(k, r, 1, t(self.lang, "cost.accumulation", unit=unit), self.f_heading)
         r += 1
         self.header(k, r, 1, [t(self.lang, "cost.period_number", unit=unit[:1].upper() + unit[1:]),
                               t(self.lang, "cost.in_progress"), t(self.lang, "cost.period_cost", unit=unit),
@@ -989,7 +990,7 @@ class _Writer:
             self.formula(k, r, 5, f"=IF($C${total_row}=0,0,D{r}/$C${total_row})", period.fraction_of_total, self.f_pct)
         last_period = r
         r += 1
-        self.put(k, r, 1, t(self.lang, "cost.check"), self.f_bold)
+        self.put(k, r, 1, t(self.lang, "cost.check"), self.f_heading)
         self.formula(k, r, 4, f"=ROUND(D{last_period}-C{total_row},9)", 0)
         self.curve = {"first": first_period, "last": last_period}
         ws.insert_chart(4, 7, self.s_curve_chart(), {"x_scale": 1.3, "y_scale": 1.2})
@@ -1008,9 +1009,9 @@ class _Writer:
         line.add_series({"name": t(self.lang, "cost.chart_cumulative"), "categories": [name, first, 0, last, 0],
                          "values": [name, first, 3, last, 3], "marker": {"type": "circle"}, "line": {"color": BAR}})
         columns.combine(line)
-        columns.set_title({"name": t(self.lang, "cost.chart_title", unit=unit)})
-        columns.set_x_axis({"name": unit[:1].upper() + unit[1:]})
-        columns.set_y_axis({"name": t(self.lang, "crash.chart_y")})
+        columns.set_title({"name": t(self.lang, "cost.chart_title", unit=unit), "name_font": {"bold": False}})
+        columns.set_x_axis({"name": unit[:1].upper() + unit[1:], "name_font": {"bold": False}})
+        columns.set_y_axis({"name": t(self.lang, "crash.chart_y"), "name_font": {"bold": False}})
         columns.set_legend({"position": "bottom"})
         return columns
 
@@ -1025,19 +1026,19 @@ class _Writer:
         self.put(k, 2, 1, t(lang, "title.problem"))
         r = 4
         if p.metadata.source_description:
-            self.put(k, r, 1, t(lang, "problem.source"), self.f_bold)
+            self.put(k, r, 1, t(lang, "problem.source"), self.f_heading)
             self.put(k, r, 2, p.metadata.source_description)
             r += 1
-        self.put(k, r, 1, t(lang, "time_unit"), self.f_bold)
+        self.put(k, r, 1, t(lang, "time_unit"), self.f_heading)
         self.put(k, r, 2, self.plural)
-        self.put(k, r + 1, 1, t(lang, "method"), self.f_bold)
+        self.put(k, r + 1, 1, t(lang, "method"), self.f_heading)
         self.put(k, r + 1, 2, t(lang, f"problem.method.{p.calculation_method.value}"))
-        self.put(k, r + 2, 1, self.x["options"], self.f_bold)
+        self.put(k, r + 2, 1, self.x["options"], self.f_heading)
         self.put(k, r + 2, 2, f"probability_method={p.options.probability_method.value}; "
                               f"variance_strategy={p.options.variance_strategy.value}")
         r += 4
         if p.questions:
-            self.put(k, r, 1, t(lang, "problem.questions"), self.f_bold)
+            self.put(k, r, 1, t(lang, "problem.questions"), self.f_heading)
             self.header(k, r + 1, 1, [t(lang, "results.label"), t(lang, "results.question"), t(lang, "problem.requested")])
             r += 2
             for q in p.questions:
@@ -1046,11 +1047,11 @@ class _Writer:
                 self.put(k, r, 3, ", ".join(labels[o] for o in q.outputs))
                 r += 1
             r += 1
-        self.put(k, r, 1, t(lang, "problem.requested"), self.f_bold)
+        self.put(k, r, 1, t(lang, "problem.requested"), self.f_heading)
         self.put(k, r, 2, ", ".join(labels[o] for o in self.s.effective_outputs), self.f_wrap)
         r += 2
         if p.probability_queries:
-            self.put(k, r, 1, t(lang, "problem.queries"), self.f_bold)
+            self.put(k, r, 1, t(lang, "problem.queries"), self.f_heading)
             self.header(k, r + 1, 1, [self.x["id"], t(lang, "prob.kind"), "≥", "≤", self.x["p"], t(lang, "provenance"),
                                       t(lang, "problem.source")])
             r += 2
@@ -1065,7 +1066,7 @@ class _Writer:
                 r += 1
             r += 1
         if p.arrow_network_trace:
-            self.put(k, r, 1, t(lang, "network.aoa"), self.f_bold)
+            self.put(k, r, 1, t(lang, "network.aoa"), self.f_heading)
             self.header(k, r + 1, 1, [t(lang, "activity"), t(lang, "network.tail"), t(lang, "network.head"),
                                       t(lang, "predecessors"), t(lang, "network.via"), t(lang, "problem.justification")])
             r += 2
@@ -1088,7 +1089,7 @@ class _Writer:
     def _assumptions(self, k: SheetKind, r: int) -> int:
         if not self.p.assumptions:
             return r
-        self.put(k, r, 1, t(self.lang, "results.assumptions"), self.f_bold)
+        self.put(k, r, 1, t(self.lang, "results.assumptions"), self.f_heading)
         self.header(k, r + 1, 1, [t(self.lang, "problem.field"), t(self.lang, "problem.value"),
                                   t(self.lang, "problem.justification"), t(self.lang, "provenance")])
         r += 2
@@ -1148,7 +1149,7 @@ class _Writer:
 
     def _result_block(self, k: SheetKind, r: int, answer: QuestionAnswer) -> int:
         """One question: label, question, answer and key value span the block; each procedure step gets its own
-        row (bold title + one operation per line) so long procedures stay readable and never hit Excel's row cap."""
+        row (numbered title + one operation per line) so long procedures stay readable and never hit Excel's row cap."""
         ws = self.ws[k]
         steps = answer.procedure_steps or []
         n = max(1, len(steps))
@@ -1158,10 +1159,7 @@ class _Writer:
                 st = steps[i]
                 body = "\n".join("   " + line for line in st.lines)
                 title = f"{st.number}. {st.title}"
-                if st.lines:
-                    ws.write_rich_string(r - 1 + i, 3, self.f_step_title, title, self.f_cell, "\n" + body, self.f_cell)
-                else:
-                    ws.write_string(r - 1 + i, 3, title, self.f_cell)
+                ws.write_string(r - 1 + i, 3, title + ("\n" + body if st.lines else ""), self.f_cell)
                 heights.append(self._text_height(title + "\n" + body, RESULT_WIDTHS[3]))
             else:
                 ws.write_blank(r - 1 + i, 3, None, self.f_cell)
@@ -1200,7 +1198,7 @@ class _Writer:
         for answer in self.s.answers:
             r = self._result_block(k, r, answer)
         r += 1
-        self.put(k, r, 1, t(lang, "results.provenance"), self.f_bold)
+        self.put(k, r, 1, t(lang, "results.provenance"), self.f_heading)
         self.header(k, r + 1, 1, [t(lang, "provenance"), t(lang, "activities"), t(lang, "problem.field")])
         r += 2
         counts: dict[str, int] = {}
@@ -1220,7 +1218,7 @@ class _Writer:
         r += 1
         r = self._assumptions(k, r)
         if self.s.validation is not None:
-            self.put(k, r, 1, t(lang, "results.checks"), self.f_bold)
+            self.put(k, r, 1, t(lang, "results.checks"), self.f_heading)
             self.header(k, r + 1, 1, [t(lang, "results.check"), t(lang, "results.passed"), t(lang, "results.detail")])
             r += 2
             for check in self.s.validation.checks:
@@ -1230,7 +1228,7 @@ class _Writer:
                 r += 1
             r += 1
         if self.s.warnings:
-            self.put(k, r, 1, self.x["warnings"], self.f_bold)
+            self.put(k, r, 1, self.x["warnings"], self.f_heading)
             self.header(k, r + 1, 1, [self.x["field"], self.x["message"]])
             r += 2
             for w in self.s.warnings:
