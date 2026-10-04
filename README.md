@@ -207,9 +207,9 @@ Sheets are planned by `plan_sheets(project, outputs)`:
 | Red AON | NETWORK_DIAGRAM | Node and arrow legend; the network drawn with cells only (no images): node blocks whose six cells are formulas to CPM, arcs routed with box-drawing characters and ► heads, critical arcs as red double lines, critical nodes shaded; arc list |
 | Gantt | GANTT | Two rows per activity, week columns, bar cells `=IF(AND(…),"█","")` with fill, Observaciones formula |
 | Probabilidad | probability or percentile queries | t_e, σ², σ links; per query Z, `NORMSDIST`, table Z and Φ, probability; `NORMSINV`, T_p, `ROUNDUP` |
-| Compresión / Crashing | CRASHING | Slope formulas, step table with chained cost formulas, direct/indirect/total summary, optimum check, and a **cost-against-duration chart** over that summary |
+| Compresión / Crashing | CRASHING | Slope formulas, step table with chained cost formulas, direct/indirect/total summary, optimum check (tables only, no charts) |
 | Red AON por paso / Network per step | NETWORK_DIAGRAM **and** CRASHING | One AON network **per compression step**, drawn with cells: the same network re-scheduled with that step's durations, so every node's t, IC \| TC, IL \| TL and slack are the step's own and the critical path moves with them. Beside each network, a panel linked to the compression sheet (project duration, activity shortened to reach the step, direct-cost increase paid, direct / indirect / total cost, length of every route) and one sentence saying what was shortened and what is shortened next |
-| Curva de costos / Cost curve | schedule outputs **and** a duration + cost for every activity | Per-activity cost and cost per period (linked to Compresión or Datos), a row per period with the activities in progress, that period's cost and the cumulative cost, a self-check `=acumulado−total`, and a combined **S-curve** chart (cumulative line + per-period columns, repeated on the Red AON sheet) |
+| Curva de costos / Cost curve | schedule outputs **and** a duration + cost for every activity | Per-activity cost and cost per period (linked to Compresión or Datos), a row per period with the activities in progress, that period's cost and the cumulative cost, a self-check `=acumulado−total`. Tables only: the workbook contains no charts and no pictures |
 | Resultados / Final Results | always | One block per question: the answer as short bullet lines (direct result first), the **Procedimiento** as numbered steps — one row per step, bold title with the formula and one substituted operation per line — and a **linked key value**; provenance counts; assumptions; the independent check table; warnings |
 
 Derived numbers are **live formulas** chained from Datos, so changing an estimate recalculates the whole workbook (tested). Each formula is written with the engine's value cached.
@@ -237,7 +237,7 @@ Derived numbers are **live formulas** chained from Datos, so changing an estimat
 | Area | File |
 |---|---|
 | Exact numbers, schema strictness, JSON logging | `test_numbers_and_models.py` |
-| Cost curve: per-period spread, compressed vs normal basis, sheet, chart and the per-step networks | `test_cost_curve.py` |
+| Cost curve: per-period spread, compressed vs normal basis, sheet (no charts) and the per-step networks | `test_cost_curve.py` |
 | Cycles (named), duplicates, unknown and self references, unreachable, disconnected | `test_network.py` |
 | AOA → AON (exercise dummies, reference example table, transitive dummies, kept-dummy equivalence) | `test_aoa_conversion.py` |
 | PERT and CPM hand-derived tables: exercise, reference Gantt example, 12-activity multi-critical synthetic, fractions, dummy nodes, variance strategies | `test_pert_and_cpm.py` |

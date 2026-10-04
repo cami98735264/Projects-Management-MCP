@@ -724,7 +724,6 @@ class _Writer:
         if self.s.cost_curve is not None and self.has(SheetKind.COST_CURVE):
             note_col = arc_col + 4
             self.put(k, 3, note_col, t(self.lang, "network.cost_note", unit=self.singular, sheet=self.name(SheetKind.COST_CURVE)))
-            ws.insert_chart(3, note_col - 1, self.s_curve_chart(), {"x_scale": 1.2, "y_scale": 1.1})
 
     # ------------------------------------------------------------------ Compresión
 
@@ -818,21 +817,6 @@ class _Writer:
             self.put(k, r, 1, t(self.lang, "crash.min_total_check"), self.f_heading)
             self.formula(k, r, 4, f"=MIN(D{first_summary}:D{last_summary})", c.optimal.total_cost)
             min_cell = (r, 4)
-        chart = self.wb.add_chart({"type": "scatter", "subtype": "straight_with_markers"})
-        name = self.name(k)
-        series = [(2, "crash.direct_cost")]
-        if any(p.indirect_cost is not None for p in c.cost_table):
-            series += [(3, "crash.indirect_cost"), (4, "crash.total_cost")]
-        for col, key in series:
-            chart.add_series({"name": t(self.lang, key),
-                              "categories": [name, first_summary - 1, 0, last_summary - 1, 0],
-                              "values": [name, first_summary - 1, col - 1, last_summary - 1, col - 1],
-                              "marker": {"type": "circle"}})
-        chart.set_title({"name": t(self.lang, "crash.chart_title"), "name_font": {"bold": False}})
-        chart.set_x_axis({"name": t(self.lang, "crash.chart_x", plural=self.plural), "name_font": {"bold": False}})
-        chart.set_y_axis({"name": t(self.lang, "crash.chart_y"), "name_font": {"bold": False}})
-        chart.set_legend({"position": "bottom"})
-        ws.insert_chart(first_summary - 2, 5, chart, {"x_scale": 1.3, "y_scale": 1.2})
         self.crash = {"slope_row": slope_row, "state_row": state_row, "summary_row": summary_row,
                       "min_cell": min_cell, "activity_col": {a.id: 8 + j for j, a in enumerate(real)}}
         ws.set_column(0, 0, 14.7)
@@ -993,27 +977,9 @@ class _Writer:
         self.put(k, r, 1, t(self.lang, "cost.check"), self.f_heading)
         self.formula(k, r, 4, f"=ROUND(D{last_period}-C{total_row},9)", 0)
         self.curve = {"first": first_period, "last": last_period}
-        ws.insert_chart(4, 7, self.s_curve_chart(), {"x_scale": 1.3, "y_scale": 1.2})
         ws.set_column(0, 0, 14)
         ws.set_column(1, 1, 22)
         ws.set_column(2, 5, 16)
-
-    def s_curve_chart(self):
-        name = self.name(SheetKind.COST_CURVE)
-        first, last = self.curve["first"] - 1, self.curve["last"] - 1
-        unit = self.singular
-        columns = self.wb.add_chart({"type": "column"})
-        columns.add_series({"name": t(self.lang, "cost.chart_period", unit=unit), "categories": [name, first, 0, last, 0],
-                            "values": [name, first, 2, last, 2], "fill": {"color": "#A6A6A6"}})
-        line = self.wb.add_chart({"type": "line"})
-        line.add_series({"name": t(self.lang, "cost.chart_cumulative"), "categories": [name, first, 0, last, 0],
-                         "values": [name, first, 3, last, 3], "marker": {"type": "circle"}, "line": {"color": BAR}})
-        columns.combine(line)
-        columns.set_title({"name": t(self.lang, "cost.chart_title", unit=unit), "name_font": {"bold": False}})
-        columns.set_x_axis({"name": unit[:1].upper() + unit[1:], "name_font": {"bold": False}})
-        columns.set_y_axis({"name": t(self.lang, "crash.chart_y"), "name_font": {"bold": False}})
-        columns.set_legend({"position": "bottom"})
-        return columns
 
     # ------------------------------------------------------------------ Enunciado
 

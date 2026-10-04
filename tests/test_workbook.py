@@ -103,7 +103,7 @@ def test_english_workbook(output_dir):
 
 
 def test_no_bold_anywhere(output_dir):
-    """Plain look: no cell font and no chart title/axis name is bold."""
+    """Plain look: no bold cell and no chart at all."""
     import json
     import zipfile
     from pathlib import Path
@@ -118,6 +118,4 @@ def test_no_bold_anywhere(output_dir):
                 if c.value is not None and c.font is not None and c.font.b]
         assert not bold, bold[:5]
         with zipfile.ZipFile(result.path) as z:
-            for name in z.namelist():
-                if name.startswith("xl/charts/"):
-                    assert ' b="1"' not in z.read(name).decode("utf-8"), name
+            assert not [n for n in z.namelist() if n.startswith(("xl/charts/", "xl/drawings/", "xl/media/"))]

@@ -101,7 +101,7 @@ def test_solution_and_workbook_carry_the_curve(output_dir):
     assert result.sheets == ["Enunciado", "Datos", "CPM", "Gantt", "Compresión", "Curva de costos", "Resultados"]
 
     sheet = openpyxl.load_workbook(result.path)["Curva de costos"]
-    assert len(sheet._charts) == 1, "the cumulative cost must be charted, not only tabulated"
+    assert not sheet._charts and not sheet._images, "no charts or pictures: the curve is a table"
     values = openpyxl.load_workbook(result.path, data_only=True)["Curva de costos"]
     header = next(r for r in range(1, 40) if values.cell(r, 1).value == "Semana")
     table = [[values.cell(r, c).value for c in range(1, 5)] for r in range(header + 1, header + 7)]
@@ -126,18 +126,18 @@ def test_workbook_without_compression_links_the_normal_costs_of_the_data_sheet(o
     assert [values.cell(header + 1 + i, 4).value for i in range(5)] == [150, 300, 500, 700, 800]
 
 
-def test_network_sheet_also_charts_the_accumulation(output_dir):
+def test_no_charts_anywhere_only_a_pointer_to_the_cost_table(output_dir):
     draft = crashed_draft()
     draft = draft.model_copy(update={"requested_outputs": [*draft.requested_outputs, RequestedOutput.NETWORK_DIAGRAM]})
     result = generate_workbook(draft, "curva_red.xlsx")
     assert result.ok, result.workbook_validation.issues[:5]
     wb = openpyxl.load_workbook(result.path)
-    # the curve is charted where the reader looks for the network too, over the cost-curve table's own cells
     network = wb["Red AON"]
-    assert len(network._charts) == 1
+    assert all(not ws._charts and not ws._images for ws in wb.worksheets)
+    with zipfile.ZipFile(result.path) as book:
+        assert not [n for n in book.namelist() if n.startswith(("xl/charts/", "xl/drawings/", "xl/media/"))]
     note = [c.value for row in network.iter_rows() for c in row if isinstance(c.value, str) and "Curva de costos" in c.value]
     assert note and note[0].startswith("Costo acumulado por semana")
-    assert len(wb["Curva de costos"]._charts) == 1
 
     # one network picture per week of the base plan, each row carrying that week's cost from the curve
 
@@ -168,7 +168,7 @@ def test_one_cell_network_per_compression_step(output_dir):
     durations = [values.cell(c.row, c.column + 1).value for row in values.iter_rows() for c in row
                  if c.value == "Duración del proyecto (semanas)"]
     assert durations == [7, 6, 5], "one panel per step, from the normal duration down to the shortest"
-    assert len(wb["Compresión"]._charts) == 1, "cost against duration is charted on the compression sheet"
+    assert not wb["Compresión"]._charts
 
 
 def test_network_without_crashing_has_no_step_sheet(output_dir):
