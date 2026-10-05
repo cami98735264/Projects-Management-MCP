@@ -1,6 +1,6 @@
 """Progressive, cumulative solution workbook: one sheet per solution step.
 
-Every sheet is the previous sheet plus the new step (highlighted in yellow); the last sheet holds the whole
+Every sheet is the previous sheet plus the new step (no highlight fill); the last sheet holds the whole
 solution. Nothing is recomputed here: the classic writer (:class:`pm_mcp.output.workbook._Writer`) draws every
 sheet through a :class:`~pm_mcp.output.recording.RecordingSheet`, and this module
 
@@ -22,7 +22,7 @@ Lanes (column widths are global to a sheet, so blocks that need different widths
 * the two drawings keep their classic columns from column A (main and step networks share one column structure,
   so the box-drawing arrows still join); every other block spreads each classic column over as many merged
   columns as it needs, so nothing is pushed off screen to the right.
-* new content is highlighted with a yellow fill; no emoji anywhere (:func:`_clean`).
+* no highlight fill, no emoji, no tool/step metadata in headers: it must look hand-made (:func:`_clean`).
 """
 
 from __future__ import annotations
@@ -45,7 +45,6 @@ from pm_mcp.output.recording import Rec, RecordingSheet
 from pm_mcp.output.workbook import GREY, SheetKind as K, WorkbookBuild, _Writer
 from pm_mcp.solution import ProjectSolution
 
-NEW_FILL = "#FFF2CC"     # cells that are new in the current sheet
 COL_W = 13.7             # uniform column width of the table lane
 DEFAULT_W = 8.43         # Excel's default column width
 MAX_TAB = 27             # ≤ 31 even after merge.py adds "P1 " / "P12 "
@@ -568,9 +567,7 @@ class _Progressive:
     # ------------------------------------------------------------------ writing
 
     def _fmt(self, spec: dict[str, Any], new: bool = False):
-        full = {**spec, "bold": False}
-        if new and "bg_color" not in full:
-            full["bg_color"] = NEW_FILL
+        full = {**spec, "bold": False}  # `new` no longer changes the look (the yellow fill read as machine-made)
         key = tuple(sorted((k, str(v)) for k, v in full.items()))
         if key not in self._formats:
             self._formats[key] = self.wb.add_format(full)
@@ -589,15 +586,15 @@ class _Progressive:
     def write(self, path: Path) -> ProgressiveBuild:
         lang = self.lang
         self.wb = xlsxwriter.Workbook(str(path), {"in_memory": True})
-        self.wb.set_properties({"created": datetime(2000, 1, 1), "title": self.p.metadata.title,
-                                "author": "pm-scheduling-mcp"})
+        self.wb.set_properties({"created": datetime.now(), "title": self.p.metadata.title,
+                                })
         self._formats: dict[tuple, Any] = {}
         expected: dict[tuple[str, int, int], Any] = {}
         tab_cells: dict[str, dict[tuple[int, int], int]] = {}
         structural: set[tuple[int, int]] = set()
         first_step: dict[tuple[int, int], int] = {}
-        banner_spec = {"font_size": 13, "bg_color": NEW_FILL, "valign": "vcenter"}
-        note_spec = {"text_wrap": True, "valign": "top", "bg_color": NEW_FILL}
+        banner_spec = {"font_size": 13, "valign": "vcenter"}
+        note_spec = {"text_wrap": True, "valign": "top"}
         for si, step in enumerate(self.steps):
             ws = self.wb.add_worksheet(step.tab)
             cells: dict[tuple[int, int], int] = {}
@@ -605,7 +602,7 @@ class _Progressive:
                 ws.set_column(col - 1, col - 1, width)
             ws.set_row(0, 21)
             ws.set_row(1, 33)
-            ws.merge_range(0, 0, 0, self.left_width - 1, _clean(f"{step.heading(lang)} — {step.title}"),
+            ws.merge_range(0, 0, 0, self.left_width - 1, _clean(f"{step.heading(lang)}: {step.title}"),
                            self._fmt(banner_spec))
             ws.merge_range(1, 0, 1, self.left_width - 1, _clean(step.note), self._fmt(note_spec))
             structural |= {(1, 1), (2, 1)}
@@ -616,15 +613,8 @@ class _Progressive:
                 shown = [rec for rec in b.source.recs if self.step_of[(name, rec.seq)] <= si]
                 if not any(rec.op == "cell" for rec in shown):
                     continue
-                latest = max(self.step_of[(name, rec.seq)] for rec in shown)
-                last_step = self.steps[latest]
-                label = f"{last_step.heading(lang)} — {last_step.title}"
-                if b.title != last_step.title:
-                    label += f" · {b.title}"
-                if latest == si:
-                    header, header_fmt = _clean(label), self._fmt({"bg_color": NEW_FILL})
-                else:
-                    header, header_fmt = _clean(label), self._fmt({})
+                # Plain block title (no "Paso N — ... · ..." metadata): reads like a student's own heading.
+                header, header_fmt = _clean(b.title), self._fmt({})
                 if b.last_col > b.first_col:
                     ws.merge_range(b.top - 1, b.first_col - 1, b.top - 1, b.last_col - 1, header, header_fmt)
                 else:

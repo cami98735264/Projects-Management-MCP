@@ -94,7 +94,7 @@ class WorkbookBuild:
 
 _EXTRA: dict[str, dict[str, str]] = {
     "es": {
-        "options": "Opciones", "data_note": "Tabla completa de actividades y procedencia de cada dato: hoja '{sheet}'.",
+        "options": "Opciones", "data_note": "Tabla de actividades: hoja '{sheet}'.",
         "cpm_note": "Holgura = IL − IC = TL − TC; actividades con holgura 0 = ruta crítica. IC = máx(TC de predecesoras); "
                     "TL = mín(IL de sucesoras).",
         "id": "id", "p": "p", "card_act": "Act.", "card_t": "t", "card_es": "IC", "card_ef": "TC", "card_ls": "IL",
@@ -106,7 +106,7 @@ _EXTRA: dict[str, dict[str, str]] = {
         "partial": "{id}: columnas {cols}",
     },
     "en": {
-        "options": "Options", "data_note": "Full activity table and the provenance of every value: sheet '{sheet}'.",
+        "options": "Options", "data_note": "Activity table: sheet '{sheet}'.",
         "cpm_note": "Slack = LS − ES = LF − EF; activities with slack 0 = critical path. ES = max(EF of predecessors); "
                     "LF = min(LS of successors).",
         "id": "id", "p": "p", "card_act": "Act.", "card_t": "t", "card_es": "ES", "card_ef": "EF", "card_ls": "LS",
@@ -172,7 +172,7 @@ class _Writer:
         self.names = {k: t(self.lang, f"sheet.{k.value}") for k in self.plan}
         self.path = path
         self.wb = xlsxwriter.Workbook(path if isinstance(path, io.BytesIO) else str(path), {"in_memory": True})
-        self.wb.set_properties({"created": datetime(2000, 1, 1), "title": self.p.metadata.title, "author": "pm-scheduling-mcp"})
+        self.wb.set_properties({"created": datetime.now(), "title": self.p.metadata.title})
         self.fmt_specs: dict[int, dict[str, Any]] = {}
         self.ws = {k: RecordingSheet(self.wb.add_worksheet(self.names[k]), self.spec_of) for k in self.plan}
         self.marks: dict[str, Any] = {}  # boundary rows the progressive layout needs (see progressive.py)
@@ -188,7 +188,7 @@ class _Writer:
         self.f_wrap = f({"text_wrap": True, "valign": "top"})
         self.f_cell = f({"text_wrap": True, "valign": "top", "border": 1})
         self.f_label = f({"align": "center", "valign": "top", "border": 1, "font_size": 12})
-        self.f_answer = f({"text_wrap": True, "valign": "top", "border": 1, "bg_color": "#EAF4E4"})
+        self.f_answer = f({"text_wrap": True, "valign": "top", "border": 1})
         self.f_key = f({"align": "center", "valign": "top", "border": 1, "text_wrap": True})
         self.f_key_int = f({"align": "center", "valign": "top", "border": 1, "num_format": "0"})
         self.f_key_dec = f({"align": "center", "valign": "top", "border": 1, "num_format": "0.0000"})
@@ -293,7 +293,6 @@ class _Writer:
         if any(a.crash is not None for a in acts):
             cols += ["crash_duration", "normal_cost", "crash_cost"]
             headers += [t(self.lang, "crash_duration"), t(self.lang, "normal_cost"), t(self.lang, "crash_cost")]
-        headers.append(t(self.lang, "provenance"))
         self.header(k, 4, 1, headers)
         self.data_col = {c: 5 + i for i, c in enumerate(cols)}
         for i, a in enumerate(acts):
@@ -315,13 +314,9 @@ class _Writer:
             }
             for c in cols:
                 self.put(k, r, self.data_col[c], values[c])
-            overrides = [f"{f}: {self.prov_label(v)}" for f, v in a.field_provenance.items() if v != a.provenance]
-            label = self.prov_label(a.provenance) + (f" ({'; '.join(overrides)})" if overrides else "")
-            self.put(k, r, 5 + len(cols), label)
         ws.set_column(0, 0, 10.7)
         ws.set_column(1, 1, 18.7)
         ws.set_column(3, 3, 13.7)
-        ws.set_column(4 + len(cols), 4 + len(cols), 42.7)
         ws.freeze_panes(4, 1)
 
     def data_ref(self, aid: str, col: str) -> str | None:
@@ -1120,7 +1115,6 @@ class _Writer:
                 self.put(k, r, 6, tr.justification)
                 r += 1
             r += 1
-        r = self._assumptions(k, r)
         self.put(k, r + 1, 1, self.x["data_note"].format(sheet=self.name(SheetKind.DATA)))
         ws.set_column(0, 0, 22.7)
         ws.set_column(1, 1, 60.7)
@@ -1238,44 +1232,8 @@ class _Writer:
         r = 5
         for answer in self.s.answers:
             r = self._result_block(k, r, answer)
-        r += 1
-        self.put(k, r, 1, t(lang, "results.provenance"), self.f_heading)
-        self.header(k, r + 1, 1, [t(lang, "provenance"), t(lang, "activities"), t(lang, "problem.field")])
-        r += 2
-        counts: dict[str, int] = {}
-        fields: dict[str, list[str]] = {}
-        for a in self.p.activities:
-            counts[a.provenance.value] = counts.get(a.provenance.value, 0) + 1
-            for f, v in a.field_provenance.items():
-                if v != a.provenance:
-                    fields.setdefault(Provenance(v).value, []).append(f"{a.id}.{f}")
-        for value in Provenance:
-            if value.value not in counts and value.value not in fields:
-                continue
-            self.put(k, r, 1, self.prov_label(value))
-            self.put(k, r, 2, counts.get(value.value, 0))
-            self.put(k, r, 3, ", ".join(fields.get(value.value, [])), self.f_wrap)
-            r += 1
-        r += 1
-        r = self._assumptions(k, r)
-        if self.s.validation is not None:
-            self.put(k, r, 1, t(lang, "results.checks"), self.f_heading)
-            self.header(k, r + 1, 1, [t(lang, "results.check"), t(lang, "results.passed"), t(lang, "results.detail")])
-            r += 2
-            for check in self.s.validation.checks:
-                self.put(k, r, 1, check.name)
-                self.put(k, r, 2, t(lang, "yes" if check.passed else "no"))
-                self.put(k, r, 3, check.detail)
-                r += 1
-            r += 1
-        if self.s.warnings:
-            self.put(k, r, 1, self.x["warnings"], self.f_heading)
-            self.header(k, r + 1, 1, [self.x["field"], self.x["message"]])
-            r += 2
-            for w in self.s.warnings:
-                self.put(k, r, 1, w.code.value)
-                self.put(k, r, 2, w.message, self.f_wrap)
-                r += 1
+        # Provenance, assumptions, validation checks and warnings stay in the tool result (solve_project /
+        # generate_solution_workbook) only: the workbook must read like a student's own solution.
         for col, width in enumerate(RESULT_WIDTHS):
             ws.set_column(col, col, width)
         ws.freeze_panes(4, 0)

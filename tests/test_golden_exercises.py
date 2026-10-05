@@ -51,8 +51,8 @@ def test_exercise_document_end_to_end(exercise_docx, output_dir, tmp_path):
     answers = {a.label: a.answer for a in solution.answers}
     assert list(answers) == list("abcdefg")
     assert "Ruta crítica: A → C → F → H → J" in answers["c"] and "σ² = 37/9" in answers["c"]
-    assert answers["c"].startswith("• Tiempo esperado del proyecto: 15 semanas.")  # direct result first
-    assert all(line.startswith(("•", "   ", "Tiempos")) for a in answers.values() for line in a.split("\n"))
+    assert answers["c"].startswith("- Tiempo esperado del proyecto: 15 semanas.")  # direct result first
+    assert all(line.startswith(("- ", "   ", "Tiempos")) for a in answers.values() for line in a.split("\n"))
     assert "0.1620" in answers["d"] and "0.3109" in answers["e"] and "0.3041" in answers["f"]
     assert "20 semanas" in answers["g"]
 
@@ -62,7 +62,7 @@ def test_exercise_document_end_to_end(exercise_docx, output_dir, tmp_path):
     assert "   B (t = 3): TL = mín(IL D = 8, IL F = 6, IL G = 10) = 6; IL = 6 − 3 = 3" in procedures["b"]
     assert "3. Holgura = IL − IC" in procedures["b"] and "   B: 3 − 2 = 1\n" in procedures["b"]
     assert "C: (2 + 10 + 4·3) / 6 = 4" in procedures["c"] and "C: σ² = [(10 − 2) / 6]² = 16/9" in procedures["c"]
-    assert "constantes: 4 = peso de m" in procedures["c"] and "2 + 4 + 1 + 3 + 5 = 15" in procedures["c"]
+    assert "(a optimista, m más probable, b pesimista)" in procedures["c"] and "2 + 4 + 1 + 3 + 5 = 15" in procedures["c"]
     assert "Z = (13 − 15) / 2.0276 = −0.9864" in procedures["d"]
     assert "1 − Φ(Z)" in procedures["e"] and "Φ(Z₂) − Φ(Z₁)" in procedures["f"]
     assert "T_p = t_e + Z · σ" in procedures["g"] and "⌈19.1642⌉ = 20 semanas" in procedures["g"]
@@ -73,7 +73,7 @@ def test_exercise_document_end_to_end(exercise_docx, output_dir, tmp_path):
     results = openpyxl.load_workbook(result.path)["Resultados"]
     label_rows = {results.cell(r, 1).value: r for r in range(5, 60) if results.cell(r, 1).value in set("abcdefg")}
     assert list(label_rows) == list("abcdefg")
-    assert results.cell(4, 4).value == "Procedimiento (variables y operaciones)"
+    assert results.cell(4, 4).value == "Procedimiento"
     d = label_rows["d"]
     assert results.cell(d, 3).value == answers["d"]
     steps = solution.answers[3].procedure_steps

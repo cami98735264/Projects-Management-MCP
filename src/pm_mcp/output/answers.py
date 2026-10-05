@@ -57,7 +57,7 @@ OUTPUT_LABELS: dict[str, dict[O, str]] = {
 }
 
 ARROW = " → "
-BULLET = "• "
+BULLET = "- "
 INDENT = "   "
 
 _W: dict[str, dict[str, str]] = {
@@ -95,8 +95,7 @@ _W: dict[str, dict[str, str]] = {
         "finish_line": "T = {expr} = {T}",
         "cost_h": "Costo directo normal = suma de los costos normales",
         # PERT
-        "te_h": "Tiempo esperado por actividad: t_e = (a + b + 4m) / 6  (a optimista, m más probable, b pesimista; "
-                "constantes: 4 = peso de m, 6 = divisor)",
+        "te_h": "Tiempo esperado por actividad: t_e = (a + b + 4m) / 6  (a optimista, m más probable, b pesimista)",
         "var_h": "Varianza por actividad: σ² = [(b − a) / 6]²",
         "variance": "Varianza del proyecto: σ² = {var} ≈ {dec}.",
         "std": "Desviación estándar: {std}.",
@@ -167,8 +166,7 @@ _W: dict[str, dict[str, str]] = {
         "finish_h": "Project duration = largest EF of the end activities",
         "finish_line": "T = {expr} = {T}",
         "cost_h": "Normal direct cost = sum of the normal costs",
-        "te_h": "Expected time per activity: t_e = (a + b + 4m) / 6  (a optimistic, m most likely, b pessimistic; "
-                "constants: 4 = weight of m, 6 = divisor)",
+        "te_h": "Expected time per activity: t_e = (a + b + 4m) / 6  (a optimistic, m most likely, b pessimistic)",
         "var_h": "Variance per activity: σ² = [(b − a) / 6]²",
         "variance": "Project variance: σ² = {var} ≈ {dec}.",
         "std": "Standard deviation: {std}.",

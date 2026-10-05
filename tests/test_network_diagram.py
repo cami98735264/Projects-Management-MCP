@@ -69,11 +69,11 @@ def test_crashing_answer_reads_as_a_decision():
         (EXAMPLES / "taller2_problema1_cpm" / "project_draft.json").read_text(encoding="utf-8")))
     answers = {a.label: a for a in solve_project(normalize_project_input(draft).project).answers}
     a, b = answers["a"].answer.split("\n"), answers["b"].answer.split("\n")
-    assert a[:3] == ["• Duración normal del proyecto: 30 semanas.",
-                     "• Costo directo normal: $69.000 (suma de los costos normales).", "• Ruta crítica: B → E → G"]
-    assert b[0] == "• Duración normal: 30 semanas, costo directo $69.000."
-    assert b[1].startswith("• Duración recomendada: 25 semanas → costo total mínimo $73.000")
-    assert b[2] == "• Para lograrlo se reduce: G 4 semanas, E 1 semana."
+    assert a[:3] == ["- Duración normal del proyecto: 30 semanas.",
+                     "- Costo directo normal: $69.000 (suma de los costos normales).", "- Ruta crítica: B → E → G"]
+    assert b[0] == "- Duración normal: 30 semanas, costo directo $69.000."
+    assert b[1].startswith("- Duración recomendada: 25 semanas → costo total mínimo $73.000")
+    assert b[2] == "- Para lograrlo se reduce: G 4 semanas, E 1 semana."
     titles = [s.title for s in answers["b"].procedure_steps]
     assert titles[0].startswith("Pendiente de costo") and titles[-1].startswith("Costo total")
     assert "   Paso 4: T = 26, costo directo $72.000 → se reduce E en 1 (+$1.000)" in answers["b"].procedure
