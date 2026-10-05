@@ -69,3 +69,28 @@ def test_ambiguous_probability_phrase_warns():
 def test_split_questions_requires_sequence():
     assert [label for label, _ in split_questions("Tiempo (Semanas) a) uno b) dos x) no d) tres")] == ["a", "b"]
     assert split_questions("Calcule la ruta crítica") == [("1", "Calcule la ruta crítica")]
+
+
+TALLER2_E = ('Maria Camila concluye que la licitacion que debe hacer para tener una oportunidad realista de ganar el contrato dejara a su empresa una ganancia de cerca de 300000 pesos si el proyecto termina en 16 semanas. Sin embargo, dada la multa por no entregar a tiempo, su compania perderia esa ganancia si el proyecto toma mas de 16 semanas. Por lo tanto, desea presentar la licitacion solo si tiene, al menos, el 70 % de oportunidad de cumplir con la fecha de entrega. Que le aconsejaria?')
+
+
+def test_probability_with_an_adjective_and_a_minimum_chance_decision():
+    # labels must run from a); the Taller 2 parts d) and e) are relabelled a) and b)
+    text = ("a) Encuentre la probabilidad aproximada de terminar el proyecto en 16 semanas.\n"
+            "b) " + TALLER2_E)
+    s = suggest_requirements_from_text(text)
+    assert outputs(s) == {"a": ["PROBABILITY_QUERY"], "b": ["PROBABILITY_QUERY", "PERCENTILE_DURATION"]}
+    queries = {q.id: (q.kind.value, q.upper_bound, q.lower_bound, q.target_probability) for q in s.probability_queries}
+    # one deadline mentioned twice is ONE query; "mas de 16 semanas" describes the loss, not P(T >= 16)
+    assert queries == {"a": ("AT_MOST", 16, None, None), "b1": ("AT_MOST", 16, None, None),
+                       "b2": ("PERCENTILE_TO_DURATION", None, None, 0.7)}
+
+
+def test_minimum_chance_in_english_and_unrelated_percentages():
+    s = suggest_requirements_from_text("a) She bids only if there is at least a 90% chance of meeting the 30-week "
+                                       "deadline. What do you advise?")
+    assert [(q.kind.value, q.upper_bound, q.target_probability) for q in s.probability_queries] == [
+        ("AT_MOST", 30, None), ("PERCENTILE_TO_DURATION", None, 0.9)]
+    s = suggest_requirements_from_text("a) A 10% discount applies if it ends in 20 days. What is the probability "
+                                       "of finishing in 20 days or less?")
+    assert [(q.kind.value, q.upper_bound) for q in s.probability_queries] == [("AT_MOST", 20)]

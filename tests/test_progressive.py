@@ -236,8 +236,15 @@ def test_no_critical_marks_before_the_slack_step(built, name):
 def test_last_sheet_holds_every_answer_of_the_classic_results(built, name):
     _, result, classic, _, _ = built[name]
     results_name = classic.sheets[-1]
-    expected = [v for v in cells_of(sheets(classic.path, data_only=True)[results_name]).values()]
-    last = list(cells_of(sheets(result.path, data_only=True)[result.sheets[-1]]).values())
+
+    def unsheet(v):  # sheet mentions differ on purpose (classic sheet → progressive tab)
+        if not isinstance(v, str):
+            return v
+        v = re.sub(r"\bthe ('[^']*'|[\w ]+?) sheet\b", "sheet ·", v)
+        return re.sub(r"\b(hoja|sheet) ('[^']*'|\w+)", r"\1 ·", v)
+
+    expected = [unsheet(v) for v in cells_of(sheets(classic.path, data_only=True)[results_name]).values()]
+    last = [unsheet(v) for v in cells_of(sheets(result.path, data_only=True)[result.sheets[-1]]).values()]
     missing = [v for v in expected if not any(values_match(v, w) for w in last)]
     assert not missing, missing[:5]
 
@@ -323,6 +330,48 @@ def test_merge_two_progressive_problems(built, tmp_path):
                 if isinstance(v, str) and v.startswith("="):
                     assert values_match(evaluator.value(key), source[tab].cell(key[1], key[2]).value)
             assert not evaluator.blank_references
+
+
+def test_merged_file_keeps_cached_results(built, tmp_path):
+    """openpyxl writes formulas without results; merge.py injects the result each source had cached, so a reader
+    that does not recalculate (data_only, /ask) still sees every number."""
+    merge = _merge_module()
+    parts = [Path(built[n][1].path) for n in ("taller2_p1_penalty", "taller2_p2_pert")]
+    target = tmp_path / "merged.xlsx"
+    merge.merge_workbooks(parts, target)
+    formulas, values = sheets(target), sheets(target, data_only=True)
+    checked = 0
+    for k, name in ((1, "taller2_p1_penalty"), (2, "taller2_p2_pert")):
+        source = sheets(built[name][1].path, data_only=True)
+        for tab in built[name][1].sheets:
+            ws = formulas[f"P{k} {tab}"]
+            for row in ws.iter_rows():
+                for c in row:
+                    if isinstance(c.value, str) and c.value.startswith("="):
+                        expected = source[tab][c.coordinate].value
+                        got = values[ws.title][c.coordinate].value
+                        assert values_match(got, expected), (ws.title, c.coordinate, got, expected)
+                        checked += 1
+    assert checked > 3000
+
+
+@pytest.mark.parametrize("name", list(CASES))
+def test_texts_name_progressive_tabs_not_classic_sheets(built, name):
+    """Fixed texts ("ver hoja 'Compresión'", "la hoja CPM") point at the tab where that content first appears."""
+    path = built[name][1].path
+    wb = sheets(path)
+    tabs = set(wb.sheetnames)
+    mentioned = set()
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for c in row:
+                if not isinstance(c.value, str) or c.value.startswith("="):
+                    continue
+                assert not re.search(r"\b(hoja|sheet) (?!')", c.value), (ws.title, c.value)
+                for quoted in re.findall(r"(?:hoja|sheet) '([^']+)'", c.value):
+                    assert quoted in tabs, (ws.title, c.value)
+                    mentioned.add(quoted)
+    assert mentioned
 
 
 def _soffice() -> str | None:

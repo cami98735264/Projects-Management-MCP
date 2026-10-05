@@ -54,10 +54,20 @@ _DELAY_RE = re.compile(
     re.IGNORECASE)
 _LABEL_RE = re.compile(r"(?<![A-Za-z0-9])([a-zA-Z])\)")
 _PERCENT_RE = re.compile(_NUM + r"\s*%")
-# probability must be the subject ("probabilidad de terminar…"), not a modifier ("distribución de probabilidad")
-_PROBABILITY_SUBJECT = re.compile(r"probabilidad (?:de|del|que)\b|probability (?:of|that)\b|\d+(?:[.,]\d+)?\s*%")
+# probability must be the subject ("probabilidad (aproximada) de terminar…"), not a modifier ("distribución de
+# probabilidad"); up to two adjectives may sit in between
+_PROBABILITY_SUBJECT = re.compile(r"probabilidad(?: [a-z]+){0,2}? (?:de|del|que)\b|probability (?:of|that)\b|"
+                                  r"\d+(?:[.,]\d+)?\s*%")
+# a minimum chance of meeting a deadline ("solo si tiene al menos el 70 % de oportunidad de cumplir"): a decision
+# that compares P(T <= deadline) with that chance, i.e. also the duration that has exactly that chance
+_CHANCE = (r"(?:probabilidad|oportunidad|posibilidad|chance|confianza|certeza|seguridad|probability|likelihood|"
+           r"confidence|certainty)")
+_THRESHOLD_RE = re.compile(rf"{_NUM}\s*%\s*(?:de\s+|of\s+)?{_CHANCE}|{_CHANCE}\s+(?:de\s+|of\s+)?(?:al menos\s+|at least\s+)?"
+                           rf"(?:el\s+|del\s+|a\s+)?{_NUM}\s*%")
+_ON_TIME = re.compile(r"cumplir|a tiempo|fecha (?:de )?(?:entrega|limite|compromiso)|plazo|terminar|entregar|"
+                      r"meet|on time|deadline|due date|finish|complete")
 _BETWEEN_RE = re.compile(rf"entre\s+{_NUM}\s*(?:{_UNIT})?\s+y\s+{_NUM}|between\s+{_NUM}\s*(?:{_UNIT})?\s+and\s+{_NUM}")
-_VALUE_RE = re.compile(rf"{_NUM}\s*{_UNIT}")
+_VALUE_RE = re.compile(rf"{_NUM}[\s-]*{_UNIT}")
 _ASKS_DURATION = re.compile(r"cuant[oa]s?|que duracion|que tiempo|debera?i?a? especificarse|how many|what duration|how long|"
                             r"which duration|plazo")
 _AT_MOST_STRONG = re.compile(r"no mas de|no more than")
@@ -121,6 +131,30 @@ def _trim_trailing_content(segment: str) -> str:
     return "\n".join(kept)
 
 
+def threshold_probabilities(text: str) -> list[float]:
+    """Minimum chances of meeting a deadline stated in a question ("al menos el 70 % de oportunidad de cumplir",
+    "at least a 90% chance of finishing on time"), as fractions. Only percentages tied to a chance/probability
+    word count, so cost or discount percentages are ignored."""
+    norm = _normalize(text)
+    if not _ON_TIME.search(norm):
+        return []
+    found = []
+    for match in _THRESHOLD_RE.finditer(norm):
+        value = _to_number(next(g for g in match.groups() if g is not None)) / 100
+        if 0 < value < 1 and value not in found:
+            found.append(value)
+    return found
+
+
+def _label_ids(label: str, queries: list[ProbabilityQuery]) -> list[ProbabilityQuery]:
+    if len(queries) == 1:
+        queries[0].id = label
+    else:
+        for i, q in enumerate(queries, start=1):
+            q.id = f"{label}{i}"
+    return queries
+
+
 def _probability_queries(label: str, raw: str, norm: str, warnings: list[ValidationIssue]) -> list[ProbabilityQuery]:
     queries: list[ProbabilityQuery] = []
     percent = _PERCENT_RE.search(norm)
@@ -128,6 +162,21 @@ def _probability_queries(label: str, raw: str, norm: str, warnings: list[Validat
         return [ProbabilityQuery(id=label, kind=ProbabilityQueryKind.PERCENTILE_TO_DURATION,
                                  target_probability=_to_number(percent.group(1)) / 100,
                                  provenance=Provenance.INFERRED, source_text=raw)]
+    thresholds = threshold_probabilities(raw)
+    if thresholds:
+        # decision on a minimum chance: P(T <= deadline) against the threshold, plus the duration with that chance
+        deadlines = list(dict.fromkeys(_to_number(v.group(1)) for v in _VALUE_RE.finditer(norm)))
+        if len(deadlines) == 1:
+            queries.append(ProbabilityQuery(kind=ProbabilityQueryKind.AT_MOST, upper_bound=deadlines[0],
+                                            provenance=Provenance.INFERRED, source_text=raw))
+        elif deadlines:
+            warnings.append(ValidationIssue(
+                code=IssueCode.AMBIGUOUS_QUERY, severity=IssueSeverity.WARNING, needs_user_clarification=True,
+                message=f"Question {label}: several durations ({', '.join(f'{d:g}' for d in deadlines)}) next to a "
+                        "minimum chance; say which one is the deadline."))
+        queries += [ProbabilityQuery(kind=ProbabilityQueryKind.PERCENTILE_TO_DURATION, target_probability=p,
+                                     provenance=Provenance.INFERRED, source_text=raw) for p in thresholds]
+        return _label_ids(label, queries)
     for clause in (c for c in norm.split(";") if c.strip()):
         between = _BETWEEN_RE.search(clause)
         if between:
@@ -149,12 +198,11 @@ def _probability_queries(label: str, raw: str, norm: str, warnings: list[Validat
                     code=IssueCode.AMBIGUOUS_QUERY, severity=IssueSeverity.WARNING, needs_user_clarification=True,
                     message=f"Question {label}: '{clause.strip()}' has no 'or less / or more' qualifier; assumed AT_MOST {number:g}."))
             bound = {"upper_bound": number} if kind == ProbabilityQueryKind.AT_MOST else {"lower_bound": number}
+            if any(q.kind == kind and q.lower_bound == bound.get("lower_bound") and
+                   q.upper_bound == bound.get("upper_bound") for q in queries):
+                continue  # the same deadline mentioned twice is one query
             queries.append(ProbabilityQuery(kind=kind, provenance=Provenance.INFERRED, source_text=clause.strip(), **bound))
-    if len(queries) == 1:
-        queries[0].id = label
-    else:
-        for i, q in enumerate(queries, start=1):
-            q.id = f"{label}{i}"
+    _label_ids(label, queries)
     if not queries:
         warnings.append(ValidationIssue(code=IssueCode.AMBIGUOUS_QUERY, severity=IssueSeverity.WARNING, needs_user_clarification=True,
                                         message=f"Question {label} mentions a probability but no duration or percentage was recognised."))

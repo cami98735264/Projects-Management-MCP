@@ -182,7 +182,46 @@ class _Progressive:
             self.hist[b.source.name] = h
         self.by_name = {b.source.name: b for b in self.blocks}
         self._layout()
+        self.retarget = self._sheet_mentions()
         self.extent = {b.source.name: self._extents(b) for b in self.blocks}
+
+    # ------------------------------------------------------------------ mentions of classic sheets in texts
+
+    def _sheet_mentions(self) -> re.Pattern | None:
+        """Fixed texts of the classic writer name its sheets ("ver hoja 'Compresión'", "cada nodo enlaza con la hoja
+        CPM"). In this layout each classic sheet is a block, so the mention is pointed at the tab where that block
+        first appears (every later tab shows it too)."""
+        tab_of: dict[str, str] = {}
+        for b in self.blocks:
+            if b.source.name.startswith("__"):
+                continue
+            first = min((self.step_of[(b.source.name, rec.seq)] for rec in b.source.recs if rec.op == "cell"),
+                        default=None)
+            if first is not None:
+                tab_of[b.source.name] = self.steps[first].tab
+        problem = self.w.names.get(K.PROBLEM)
+        if problem and problem not in tab_of:
+            tab_of[problem] = self.steps[self.index.get("questions", 0)].tab
+        self.tab_of = tab_of
+        names = "|".join(re.escape(n) for n in sorted(tab_of, key=len, reverse=True))
+        if not names:
+            return None
+        # 'Name' | hoja Name | sheet Name | the Name sheet — one pass, so a replaced tab is never re-matched
+        return re.compile(rf"'(?P<q>{names})'|\b(?P<w>hoja|sheet) (?P<b>{names})\b(?!')|\bthe (?P<t>{names}) sheet\b")
+
+    def _text(self, text: str) -> str:
+        text = _clean(text)
+        if self.retarget is None:
+            return text
+
+        def repl(m: re.Match) -> str:
+            if m.group("q"):
+                return f"'{self.tab_of[m.group('q')]}'"
+            if m.group("b"):
+                return f"{m.group('w')} '{self.tab_of[m.group('b')]}'"
+            return f"sheet '{self.tab_of[m.group('t')]}'"
+
+        return self.retarget.sub(repl, text)
 
     # ------------------------------------------------------------------ steps
 
@@ -470,7 +509,7 @@ class _Progressive:
             plain = not ({"border", "text_wrap", "bg_color"} & set(final.spec))
             if final.vtype in ("string", "formula") and plain and isinstance(final.value if final.vtype == "string"
                                                                                else final.cached, str):
-                text = final.value if final.vtype == "string" else final.cached
+                text = self._text(final.value) if final.vtype == "string" else final.cached
                 need = len(text) * 1.1 * (final.spec.get("font_size", 11) / 11)
                 limit = min([col for col in occupied.get(r, []) if col > first] + [b.last_col + 1]) - 1
                 acc = sum(self.widths.get(col, COL_W) for col in range(first, last + 1))
@@ -543,7 +582,7 @@ class _Progressive:
         elif rec.vtype == "number":
             ws.write_number(r - 1, c - 1, rec.value, fmt)
         elif rec.vtype == "string":
-            ws.write_string(r - 1, c - 1, _clean(rec.value), fmt)
+            ws.write_string(r - 1, c - 1, self._text(rec.value), fmt)
         elif fmt is not None:
             ws.write_blank(r - 1, c - 1, None, fmt)
 

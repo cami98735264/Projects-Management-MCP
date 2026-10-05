@@ -172,7 +172,7 @@ Resources: `pm://methodology`, `pm://schema/project-draft`. Prompt: `solve_exerc
 ## 8. AI / MCP interaction model
 
 1. **Extract.** Call `extract_document_content` on each file. Read `text_blocks`, then **open every saved image**: tables, formulas and figures are often only images.
-2. **Understand the questions.** Call `suggest_requirements_from_text` on the joined text, and confirm each suggested question, output, query and time unit against the source.
+2. **Understand the questions.** Call `suggest_requirements_from_text` on the joined text, and confirm each suggested question, output, query and time unit against the source. A part that sets a minimum chance of meeting a deadline ("presentar la licitación solo si tiene al menos el 70 % de oportunidad de cumplir") gets two queries: P(T ≤ deadline) and the duration with that chance (`PERCENTILE_TO_DURATION`, sheet `Duración objetivo`). `normalize_project_input` adds the percentile from the literal question text when a draft forgot it (recorded in `inferences`).
 3. **Transcribe the data.**
    * A precedence table becomes `Activity[]`.
    * A numbered-circle, lettered-arrow figure becomes `ArrowArc[]` (dashed = dummy), then `convert_arrow_network`.
@@ -236,9 +236,9 @@ solution step, every sheet = the previous sheet + the new step, and the last she
 | `N Costo total` / `Decisión` | direct + indirect = total table (and the hidden indirect/total rows of every step panel) / optimum rows |
 | `N Curva de costos`, `N Respuestas` | the cost curve; the full Resultados block at the bottom |
 
-Rows 1–2 of every sheet are a yellow `🆕 Paso N — <title>` banner with a 1–2 line note (es/en, `i18n.py`
-`prog.*`) saying what is computed, with which formula and why. Every block has a header row (`🆕 Paso N — …` when
-it changed on this sheet, plain `Paso k — …` otherwise); cells new on the sheet are yellow unless they have their own
+Rows 1–2 of every sheet are a yellow `Paso N — <title>` banner with a 1–2 line note (es/en, `i18n.py`
+`prog.*`) saying what is computed, with which formula and why. Every block has a header row (`Paso k — …`, yellow when
+it changed on this sheet); no emoji anywhere; cells new on the sheet are yellow unless they have their own
 fill.
 
 How it works (`output/recording.py`, `output/progressive.py`): the classic writer draws every sheet through a
@@ -262,7 +262,12 @@ one was written). `validate_workbook(path, project)` regenerates with the layout
 
 Pitfalls: a merged cell never lets text overflow, so plain text cells are merged as far right as their text needs
 (up to the next cell of the final layout); the fence columns hold a `" "` in rows with text so a long line stops at its
-lane; static text that mentions a classic sheet name (e.g. "ver hoja 'Compresión'") is kept as written.
+lane; static text that mentions a classic sheet name ("ver hoja 'Compresión'", "la hoja CPM", "the CPM sheet") is
+rewritten to the tab where that block first appears (e.g. "ver hoja '6 Pendientes'"; tested for every case).
+
+Merging several problems (pm-solve-api `merge.py`) copies the sheets with openpyxl, which cannot write formula
+results, so it injects each source cell's cached result into the saved XML: the merged file shows every number even
+in readers that do not recalculate.
 
 ## 11. Validation layer
 

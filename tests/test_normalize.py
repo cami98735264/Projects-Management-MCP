@@ -79,3 +79,28 @@ def test_default_and_question_driven_outputs():
     assert run(activities=[act("A", [], 1)]).project.requested_outputs == ["FULL_REPORT"]
     result = run(activities=[act("A", [], 1)], questions=[QuestionItem(label="a", text="ruta", outputs=["CRITICAL_PATH", "SLACK"])])
     assert result.project.requested_outputs == ["CRITICAL_PATH", "SLACK"]
+
+
+def test_minimum_chance_question_gets_its_percentile_query():
+    """A literal question that sets a minimum chance of meeting the deadline also needs the duration with exactly
+    that chance; when the draft only carries P(T <= deadline) the percentile is added from the question text."""
+    text = ('Maria Camila concluye que la licitacion que debe hacer para tener una oportunidad realista de ganar el contrato dejara a su empresa una ganancia de cerca de 300000 pesos si el proyecto termina en 16 semanas. Sin embargo, dada la multa por no entregar a tiempo, su compania perderia esa ganancia si el proyecto toma mas de 16 semanas. Por lo tanto, desea presentar la licitacion solo si tiene, al menos, el 70 % de oportunidad de cumplir con la fecha de entrega. Que le aconsejaria?')
+    estimates = [act("A", [], est=(1, 2, 9)), act("B", ["A"], est=(2, 3, 4))]
+    draft = dict(activities=estimates,
+                 probability_queries=[ProbabilityQuery(id="d", kind="AT_MOST", upper_bound=16)],
+                 questions=[QuestionItem(label="d", text="Probabilidad de terminar en 16 semanas",
+                                         outputs=["PROBABILITY_QUERY"], probability_query_ids=["d"]),
+                            QuestionItem(label="e", text=text, outputs=["PROBABILITY_QUERY"],
+                                         probability_query_ids=["d"])])
+    result = run(**draft)
+    assert result.ok
+    queries = {q.id: (q.kind.value, q.target_probability) for q in result.project.probability_queries}
+    assert queries == {"d": ("AT_MOST", None), "e": ("PERCENTILE_TO_DURATION", 0.7)}
+    e = result.project.questions[-1]
+    assert e.probability_query_ids == ["d", "e"]
+    assert [o.value for o in e.outputs] == ["PROBABILITY_QUERY", "PERCENTILE_DURATION"]
+    assert any(i.field_path == "probability_queries[e]" for i in result.inferences)
+    # already present (the fixture way): nothing is added twice
+    again = normalize_project_input(ProjectDraft.model_validate(result.project.model_dump()))
+    assert len(again.project.probability_queries) == 2
+    assert again.project.questions[-1].probability_query_ids == ["d", "e"]
