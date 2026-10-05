@@ -33,7 +33,10 @@ from pm_mcp.output.workbook_validation import validate_workbook, values_match
 from pm_mcp.pipeline import solve_project
 from pm_mcp.service import check_workbook, generate_workbook
 
-DOUBLE = set("═║╔╗╚╝╠╣╦╩╬╒╕╘╛╞╡╤╧╪╓╖╙╜╟╢╥╨╫")
+def double_borders(ws) -> int:
+    """Cells with a double (critical) border: the network's critical arcs are red double cell borders."""
+    return sum(1 for row in ws.iter_rows() for c in row
+               if "double" in (c.border.bottom.style, c.border.right.style))
 MERGE_PY = Path("/home/ubuntu/development/services/pm-solve-api/src/pm_solve_api/merge.py")
 
 # literal narrative and questions of the Taller 2 statement (tests/fixtures/taller2_projects.json holds the data)
@@ -223,12 +226,10 @@ def test_no_critical_marks_before_the_slack_step(built, name):
     wb = sheets(result.path)
     for step in build.steps[:slack]:
         ws = wb[step.tab]
-        text = "".join(str(v) for v in cells_of(ws).values())
-        assert not DOUBLE & set(text), f"{step.tab} shows a critical (double) line"
+        assert not double_borders(ws), f"{step.tab} shows a critical (double) line"
         assert not list(ws.conditional_formatting), f"{step.tab} has conditional formats"
-    later = "".join(str(v) for v in cells_of(wb[build.steps[slack].tab]).values())
     if any(n in build.classic.sheet_names for n in ("Red AON", "Network AON")):
-        assert DOUBLE & set(later), "the slack step draws the critical path with double lines"
+        assert double_borders(wb[build.steps[slack].tab]), "the slack step draws the critical path with double lines"
         assert list(wb[build.steps[slack].tab].conditional_formatting), "critical shading starts at the slack step"
 
 

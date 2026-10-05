@@ -155,7 +155,7 @@ def test_one_cell_network_per_compression_step(output_dir):
     wb = openpyxl.load_workbook(result.path)
     sheet = wb["Red AON por paso"]
     assert len(sheet._images) == 0 and distinct_images(result.path) == 0, "networks are drawn with cells, not images"
-    arrows = sum(1 for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.endswith("►"))
+    arrows = sum(1 for row in sheet.iter_rows() for c in row if c.border.diagonalDown and c.border.diagonal.style)
     edges = len(solve_project(normalized(draft)).network.edges)
     assert arrows == steps * edges + 2, "one arrow head per arc in every step (+ 2 legend samples)"
     assert {"PASO 0", "PASO 1", "PASO 2"} <= {sheet.cell(r, 1).value for r in range(1, sheet.max_row + 1)}

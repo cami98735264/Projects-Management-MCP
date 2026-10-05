@@ -81,7 +81,7 @@ def test_crashing_answer_reads_as_a_decision():
 
 # ---------------------------------------------------------------------------------------------- cell drawing
 
-from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, plan_cell_network  # noqa: E402
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, PORT_ROWS, border_cells, plan_cell_network  # noqa: E402
 from pm_mcp.service import generate_workbook  # noqa: E402
 
 
@@ -104,14 +104,25 @@ def test_cell_network_geometry(case):
                 touches_node = (r + dr, c + dc) in blocks
                 assert touches_node or (other and {"E": "W", "W": "E", "N": "S", "S": "N"}[d] in other.dirs)
     assert net.crossings == nd.count_crossings(cpm)
+    # borders: never on a block, one barb per arc, every barb in the cell left of a block, and every line meets
+    # a block's side between its first and last row (never along its top / bottom edge)
+    borders = border_cells(net)
+    assert not blocks & set(borders), "no border is drawn on a node cell"
+    barbs = [(r, c) for (r, c), b in borders.items() if b.barb]
+    assert sorted(barbs) == sorted(arrows), "one barb per arrow cell"
+    for (r, c) in barbs:
+        place = next(p for p in net.nodes.values() if p.col == c + 1 and p.row <= r < p.row + NODE_ROWS)
+        assert r - place.row < PORT_ROWS, "the line (bottom edge of the port row) meets the block's side"
+        assert borders[(r, c)].bottom, "the barb sits on its line"
 
 
 def test_critical_arcs_are_double_red_lines():
     net = plan_cell_network(_cpm("taller2_problema1_cpm"))   # B → E → G critical
-    crit = [lc for lc in net.lines.values() if lc.critical]
-    assert crit and all("═" in lc.text()[0] or "║" in lc.text()[0] or "╗" in lc.text()[0] or "╚" in lc.text()[0]
-                        or "╔" in lc.text()[0] or "╝" in lc.text()[0] for lc in crit)
-    assert all("═" not in lc.text()[0] for lc in net.lines.values() if not lc.critical)
+    borders = border_cells(net)
+    assert sum(b.bottom == "d" for b in borders.values()) >= 3, "B → E → G drawn with red double borders"
+    assert not any(b.critical for k, b in borders.items()
+                   if not any(net.lines.get(n) and net.lines[n].critical for n in (k, (k[0], k[1] - 1), (k[0] - 1, k[1]))))
+    assert all(v != "d" for b in borders.values() for v in b.neutral().__dict__.values())
 
 
 def test_workbook_network_is_cells_not_pictures(output_dir):
@@ -128,5 +139,7 @@ def test_workbook_network_is_cells_not_pictures(output_dir):
     assert not sheet._images
     formulas = [c.value for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.startswith("='CPM'!")]
     assert len(formulas) == 5 * 6, "every node shows t, IC, TC, IL, TL, holgura … linked to the CPM sheet"
-    arrows = [c.value for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and c.value.endswith("►")]
+    arrows = [c for row in sheet.iter_rows() for c in row if c.border.diagonalDown and c.border.diagonal.style]
     assert len(arrows) == 5 + 2  # 5 arcs + the two legend samples
+    texts = [c.value for row in sheet.iter_rows() for c in row if isinstance(c.value, str)]
+    assert not [t for t in texts if set(t) & set("─│═║►┌┐└┘")], "arcs are borders, not box-drawing text"

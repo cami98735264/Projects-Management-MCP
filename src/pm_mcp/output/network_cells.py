@@ -7,17 +7,22 @@ Each activity is a 2 × 4 block of bordered cells::
     | IL | TL |
     | Holgura |
 
-Arcs are drawn in the narrow "channel" columns between two layers with box-drawing characters (─ │ ┌ ┐ └ ┘ ├ ┤ ┬
-┴ ┼) and end in an arrow head (►) next to the successor's block. Critical arcs use double lines (═ ║ ╔ …) in red,
-critical nodes are shaded, so the critical path stands out.
+Arcs are drawn in the narrow "channel" columns between two layers with CELL BORDERS (no text, so nothing
+overflows a cell and LibreOffice shows no red clipping marks): a line through cell (r, c) runs along the cell
+edges that meet at the cell's bottom-right corner (see :func:`border_cells`), and it ends in a barb (a diagonal
+border) in the cell next to the successor's block, whose tip touches the block on the line. Critical arcs use
+red double borders, critical nodes are shaded, so the critical path stands out. :meth:`LineCell.text` (the
+older box-drawing glyphs) is kept only as a textual description of a cell.
 
 Geometry comes from :func:`pm_mcp.output.network_diagram.compute_layout` (layered layout, exact crossing
 minimisation, critical path pinned to one height, long arcs routed through virtual nodes). This module turns it
 into an integer cell grid:
 
 * rows: one layout pitch = :data:`PITCH_ROWS` rows (4 for the block + a gap); a virtual node is one row;
-* ports: the arcs leaving / entering a block use different rows of the block, ordered to avoid crossings and
-  keeping the critical arc on the block's second row so the critical path stays one straight line;
+* ports: the arcs leaving / entering a block use different rows of the block (the first :data:`PORT_ROWS` ones,
+  so the border line, drawn at the bottom of the port row, always meets the block's side and never its bottom
+  edge), ordered to avoid crossings and keeping the critical arc on the block's second row, whose bottom edge
+  is the block's vertical centre, so the critical path stays one straight line;
 * channels: every arc that changes row gets its own vertical track; the track order is chosen to minimise
   crossings and never lets two different arcs share a horizontal run.
 
@@ -36,7 +41,8 @@ from pm_mcp.output.network_diagram import NetworkLayout, compute_layout
 PITCH_ROWS = 7          # rows per layout pitch: 4 block rows + 3 gap rows
 NODE_ROWS = 4
 NODE_COLS = 2
-CENTRE_PORT = 1         # block row used by a single (or the critical) arc: the IC | TC row
+PORT_ROWS = NODE_ROWS - 1  # rows an arc may attach to (its border runs along the row's bottom edge)
+CENTRE_PORT = 1         # block row used by a single (or the critical) arc: its bottom edge is the block's centre
 MAX_PERMUTATION_HOPS = 7
 
 N, S, E, W = "N", "S", "E", "W"
@@ -135,14 +141,14 @@ class _Hop:
 
 def _choose_ports(rows_wanted: list[float], critical_index: int | None, top: int) -> list[int]:
     """Pick distinct block rows (in order) for k arcs, closest to where they want to go; the critical arc is
-    pulled hard to the centre port. With more than NODE_ROWS arcs, ports are shared in order."""
+    pulled hard to the centre port. With more than PORT_ROWS arcs, ports are shared in order."""
     k = len(rows_wanted)
     if k == 0:
         return []
-    if k > NODE_ROWS:
-        return [top + min(NODE_ROWS - 1, i * NODE_ROWS // k) for i in range(k)]
+    if k > PORT_ROWS:
+        return [top + min(PORT_ROWS - 1, i * PORT_ROWS // k) for i in range(k)]
     best: tuple[float, tuple[int, ...]] | None = None
-    for combo in itertools.combinations(range(NODE_ROWS), k):
+    for combo in itertools.combinations(range(PORT_ROWS), k):
         cost = 0.0
         for i, (port, wanted) in enumerate(zip(combo, rows_wanted)):
             if i == critical_index:
@@ -241,7 +247,8 @@ def plan_cell_network(schedule: CpmResult, min_channel_widths: list[int] | None 
             if not lay.is_virtual(n):
                 top[n] = int(math.floor(lay.y[n] * PITCH_ROWS + 0.5))
     for li, col in enumerate(lay.order):
-        blocked = {r for n in col if not lay.is_virtual(n) for r in range(top[n], top[n] + NODE_ROWS)}
+        # the row just above a block is blocked too: a line there runs along the block's top edge
+        blocked = {r for n in col if not lay.is_virtual(n) for r in range(top[n] - 1, top[n] + NODE_ROWS)}
         for n in sorted((n for n in col if lay.is_virtual(n)), key=lambda n: (lay.y[n], n)):
             want = int(math.floor(lay.y[n] * PITCH_ROWS + 0.5)) + CENTRE_PORT  # level with a block's centre port
             for delta in itertools.chain([0], *([d, -d] for d in range(1, 50))):
@@ -356,6 +363,59 @@ def plan_cell_network(schedule: CpmResult, min_channel_widths: list[int] | None 
     height = max([*(p.row + NODE_ROWS for p in nodes.values()), *(r + 1 for r, _ in lines)])
     return CellNetwork(nodes=nodes, lines=lines, width=total_width, height=height, channel_widths=widths,
                        node_columns=node_cols, crossings=crossings)
+
+
+@dataclass
+class CellBorder:
+    """Borders of one drawing cell: ``bottom`` / ``right`` edge and the arrow barb (diagonal from the top-left to
+    the bottom-right corner); each is None (absent), "s" (single black) or "d" (critical: red double)."""
+
+    bottom: str | None = None
+    right: str | None = None
+    barb: str | None = None
+
+    def mark(self, side: str, critical: bool) -> None:
+        if getattr(self, side) != "d":
+            setattr(self, side, "d" if critical else "s")
+
+    @property
+    def critical(self) -> bool:
+        return "d" in (self.bottom, self.right, self.barb)
+
+    def neutral(self) -> CellBorder:
+        """The same lines before the critical path is known (all single black)."""
+        return CellBorder(*("s" if v else None for v in (self.bottom, self.right, self.barb)))
+
+
+def border_cells(net: CellNetwork) -> dict[tuple[int, int], CellBorder]:
+    """Cell borders that draw every line of ``net``.
+
+    A line cell's centre is mapped to its bottom-right corner, so W = bottom edge of the cell, E = bottom edge of
+    the cell to the right, N = right edge of the cell, S = right edge of the cell below. Consecutive cells
+    therefore join into continuous lines, corners and crossings meet at a cell corner, and the arrow cell
+    (always the channel column next to the successor's block) ends exactly on the block's left side, where its
+    barb is drawn. Edges that would fall on a block (the E of an arrow cell) are dropped."""
+    blocks = {(p.row + r, p.col + c) for p in net.nodes.values() for r in range(NODE_ROWS) for c in range(NODE_COLS)}
+    out: dict[tuple[int, int], CellBorder] = {}
+
+    def mark(r: int, c: int, side: str, critical: bool) -> None:
+        if (r, c) not in blocks:
+            out.setdefault((r, c), CellBorder()).mark(side, critical)
+
+    for (r, c), lc in net.lines.items():
+        for d in lc.dirs:
+            crit = d in lc.critical_dirs
+            if d == W:
+                mark(r, c, "bottom", crit)
+            elif d == E:
+                mark(r, c + 1, "bottom", crit)
+            elif d == N:
+                mark(r, c, "right", crit)
+            else:
+                mark(r + 1, c, "right", crit)
+        if lc.arrow:
+            mark(r, c, "barb", lc.arrow_critical)
+    return out
 
 
 def plan_many(schedules: list[CpmResult]) -> list[CellNetwork]:

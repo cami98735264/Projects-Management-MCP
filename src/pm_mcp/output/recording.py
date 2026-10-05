@@ -85,6 +85,10 @@ class RecordingSheet:
         """Record a string without writing it (an earlier-step variant of a cell the writer draws next)."""
         self._add(op="cell", r=row + 1, c=col + 1, vtype="string", value=string, spec=self._spec(cell_format))
 
+    def shadow_blank(self, row: int, col: int, cell_format: Any = None) -> None:
+        """Record a formatted blank without writing it (an earlier-step variant of a cell drawn next)."""
+        self._add(op="cell", r=row + 1, c=col + 1, vtype="blank", value=None, spec=self._spec(cell_format))
+
     def write_number(self, row: int, col: int, number: float, cell_format: Any = None):
         self._add(op="cell", r=row + 1, c=col + 1, vtype="number", value=number, spec=self._spec(cell_format))
         if self._target is not None:

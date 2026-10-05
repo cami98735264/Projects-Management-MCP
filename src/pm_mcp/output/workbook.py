@@ -29,7 +29,7 @@ from pm_mcp.engine.network import enumerate_paths
 from pm_mcp.i18n import t
 from pm_mcp.output.answers import OUTPUT_LABELS
 from pm_mcp.output.formula_eval import excel_text
-from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, LineCell, plan_many
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellBorder, CellNetwork, border_cells, plan_many
 from pm_mcp.output.recording import RecordingSheet
 from pm_mcp.solution import ProjectSolution, QuestionAnswer
 
@@ -124,7 +124,7 @@ CRITICAL_GREY = "#BFBFBF"
 BAR = "#4F81BD"
 TOL = "0.000000001"
 LINE_CRITICAL = "#C00000"     # critical arcs: red double lines
-LINE_ROW_HEIGHT = 15.0        # drawing rows: fixed height so the box-drawing glyphs join vertically
+LINE_ROW_HEIGHT = 15.0        # drawing rows: fixed height (lines are cell borders, ports sit on row edges)
 NODE_COL_WIDTH = 6.7
 CHANNEL_COL_WIDTH = 2.7
 
@@ -207,7 +207,7 @@ class _Writer:
         self.prob_cells: dict[int, tuple[int, int]] = {}  # index in project queries → key cell
         self.crash: dict[str, Any] = {}
         self.curve: dict[str, Any] = {}
-        self._line_formats: dict[tuple[str, bool], Any] = {}
+        self._line_formats: dict[tuple[str | None, ...], Any] = {}
         self._card_formats: dict[tuple, Any] = {}
 
     # ------------------------------------------------------------------ primitives
@@ -640,12 +640,20 @@ class _Writer:
 
     # ------------------------------------------------------------------ network pictures
 
-    def _line_format(self, align: str, critical: bool):
-        key = (align, critical)
+    def _line_format(self, border: CellBorder):
+        """Blank cell whose borders draw a piece of an arc: thin black, or red double on the critical path; the
+        arrow barb is a diagonal border (medium red when critical, a double diagonal is hard to see)."""
+        key = (border.bottom, border.right, border.barb)
         if key not in self._line_formats:
-            self._line_formats[key] = self._format({
-                "font_name": "Consolas", "font_size": 14, "align": align, "valign": "vcenter",
-                "font_color": LINE_CRITICAL if critical else "#000000"})
+            spec: dict[str, Any] = {}
+            for side, value in (("bottom", border.bottom), ("right", border.right)):
+                if value:
+                    spec[side] = 6 if value == "d" else 1
+                    spec[f"{side}_color"] = LINE_CRITICAL if value == "d" else "#000000"
+            if border.barb:
+                spec.update({"diag_type": 2, "diag_border": 2 if border.barb == "d" else 1,
+                             "diag_color": LINE_CRITICAL if border.barb == "d" else "#000000"})
+            self._line_formats[key] = self._format(spec)
         return self._line_formats[key]
 
     def _card_format(self, value: Any, critical: bool, text: bool = False):
@@ -680,17 +688,14 @@ class _Writer:
         cpm_rows = self.cpm_rows.get(SheetKind.CPM, {}) if linked else {}
         for r in range(net.height):
             ws.set_row(r0 - 1 + r, LINE_ROW_HEIGHT)
-        for (r, c), line in sorted(net.lines.items()):
-            if line.critical:
-                # neutral version (single black glyphs), recorded only: the progressive layout shows it until the
-                # critical path is known; the classic workbook never contains it
-                neutral = LineCell(dirs=set(line.dirs), arrow=line.arrow)
-                text, align = neutral.text()
+        for (r, c), border in sorted(border_cells(net).items()):
+            if border.critical:
+                # neutral version (single black borders), recorded only: the progressive layout shows it until
+                # the critical path is known; the classic workbook never contains it
                 with self.tagged(kind, "line"):
-                    ws.shadow_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, False))
-            text, align = line.text()
-            with self.tagged(kind, "line_crit" if line.critical else "line"):
-                ws.write_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, line.critical))
+                    ws.shadow_blank(r0 - 1 + r, c0 - 1 + c, self._line_format(border.neutral()))
+            with self.tagged(kind, "line_crit" if border.critical else "line"):
+                ws.write_blank(r0 - 1 + r, c0 - 1 + c, None, self._line_format(border))
         for place in net.nodes.values():
             row = rows[place.activity_id]
             r, c = r0 + place.row, c0 + place.col
@@ -725,12 +730,15 @@ class _Writer:
             ws.set_column(col - 1, col - 1, NODE_COL_WIDTH if in_node else CHANNEL_COL_WIDTH)
 
     def _network_legend(self, k: SheetKind, row: int) -> None:
+        """Two sample arrows drawn like the network (bottom borders + a barb in the last cell), in B..D."""
         self.put(k, row, 2, t(self.lang, "network.lines"), self.f_heading)
-        with self.tagged(k, "legend_crit"):
-            self.ws[k].write_string(row, 1, "═════►", self._line_format("left", True))
-            self.put(k, row + 1, 5, t(self.lang, "network.critical_line"))
-        self.ws[k].write_string(row + 1, 1, "─────►", self._line_format("left", False))
-        self.put(k, row + 2, 5, t(self.lang, "network.normal_line"))
+        samples = ((row, "d", "legend_crit", "network.critical_line"), (row + 1, "s", None, "network.normal_line"))
+        for r, style, tag, label in samples:
+            with self.tagged(k, *([tag] if tag else [])):
+                for col in (1, 2, 3):
+                    border = CellBorder(bottom=style, barb=style if col == 3 else None)
+                    self.ws[k].write_blank(r, col, None, self._line_format(border))
+                self.put(k, r + 1, 5, t(self.lang, label))
 
     def write_network(self) -> None:
         k = SheetKind.NETWORK
