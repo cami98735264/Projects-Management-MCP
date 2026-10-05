@@ -8,7 +8,9 @@ it with the engine independently of xlsxwriter.
 
 from __future__ import annotations
 
+import io
 import math
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -27,7 +29,8 @@ from pm_mcp.engine.network import enumerate_paths
 from pm_mcp.i18n import t
 from pm_mcp.output.answers import OUTPUT_LABELS
 from pm_mcp.output.formula_eval import excel_text
-from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, plan_cell_network, plan_many
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, LineCell, plan_cell_network, plan_many
+from pm_mcp.output.recording import RecordingSheet
 from pm_mcp.solution import ProjectSolution, QuestionAnswer
 
 
@@ -155,7 +158,10 @@ RESULT_WIDTHS = (8.7, 38.7, 62.7, 88.7, 18.7)  # Resultados: Parte, Pregunta, Re
 
 
 class _Writer:
-    def __init__(self, solution: ProjectSolution, path: Path):
+    """Classic workbook writer. Every worksheet is wrapped in a :class:`RecordingSheet` (forwards each call, keeps a
+    record with the format spec and the active tags) so the progressive layout can replay the same cells."""
+
+    def __init__(self, solution: ProjectSolution, path: Path | io.BytesIO):
         self.s = solution
         self.p: Project = solution.project
         self.lang = str(self.p.metadata.language)
@@ -165,9 +171,11 @@ class _Writer:
         self.plan = plan_sheets(self.p, solution.effective_outputs)
         self.names = {k: t(self.lang, f"sheet.{k.value}") for k in self.plan}
         self.path = path
-        self.wb = xlsxwriter.Workbook(str(path), {"in_memory": True})
+        self.wb = xlsxwriter.Workbook(path if isinstance(path, io.BytesIO) else str(path), {"in_memory": True})
         self.wb.set_properties({"created": datetime(2000, 1, 1), "title": self.p.metadata.title, "author": "pm-scheduling-mcp"})
-        self.ws = {k: self.wb.add_worksheet(self.names[k]) for k in self.plan}
+        self.fmt_specs: dict[int, dict[str, Any]] = {}
+        self.ws = {k: RecordingSheet(self.wb.add_worksheet(self.names[k]), self.spec_of) for k in self.plan}
+        self.marks: dict[str, Any] = {}  # boundary rows the progressive layout needs (see progressive.py)
         self.expected: dict[tuple[str, int, int], Any] = {}
         self.notes: list[str] = []
         f = self._format
@@ -206,7 +214,19 @@ class _Writer:
 
     def _format(self, spec: dict[str, Any]):
         """Every cell format goes through here: nothing in the workbook is bold (plain, hand-made look)."""
-        return self.wb.add_format({**spec, "bold": False})
+        full = {**spec, "bold": False}
+        fmt = self.wb.add_format(full)
+        self.fmt_specs[id(fmt)] = full
+        return fmt
+
+    def spec_of(self, fmt: Any) -> dict[str, Any]:
+        return self.fmt_specs.get(id(fmt), {})
+
+    @contextmanager
+    def tagged(self, kind: SheetKind, *tags: str):
+        """Tag every call made inside the block (the progressive layout decides the step of a cell from them)."""
+        with self.ws[kind].tagged(*tags):
+            yield
 
     def has(self, kind: SheetKind) -> bool:
         return kind in self.ws
@@ -363,7 +383,8 @@ class _Writer:
             self.formula(kind, row, 12, f'=IF(ABS({_cell(row, 9)})<{TOL},"{yes}","{no}")', yes if r.is_critical else no)
         last = 5 + len(schedule.activities)
         self.grey_rule(kind, (6, 1), (last, 12), f"ABS($I6)<{TOL}")
-        self.put(kind, last + 2, 1, self.x["cpm_note"])
+        with self.tagged(kind, "note"):
+            self.put(kind, last + 2, 1, self.x["cpm_note"])
         ws.set_column(0, 0, 12.7)
         ws.set_column(1, 2, 11)
         ws.set_column(3, 11, 13.7)
@@ -405,6 +426,8 @@ class _Writer:
         last = 5 + len(pert.estimates)
         self.grey_rule(k, (6, 1), (last, 11), f'$K6="{yes}"')
         if var is not None:
+            self.ws[k].tags.append("variance")  # project σ² / σ rows: a later step than the per-activity table
+            self.marks["pert_variance_first"] = last + 2
             r = last + 2
             self.put(k, r, 1, t(self.lang, "pert.path_used"), self.f_heading)
             self.put(k, r, 5, " – ".join(var.selected_activities), self.f_heading)
@@ -435,6 +458,7 @@ class _Writer:
                     terms = [_cell(self.pert_row[a], 6) for a in pv.path if a in self.pert_row]
                     self.formula(k, r, 6, "=" + ("+".join(terms) if terms else "0"), pv.variance)
                     self.put(k, r, 7, fraction_text(pv.variance))
+            self.ws[k].tags.pop()
         ws.set_column(0, 0, 9.7)
         ws.set_column(4, 5, 14.7)
         ws.set_column(8, 9, 30.7)
@@ -501,6 +525,8 @@ class _Writer:
                 self.prob_cells[qi] = (first, 9 if res.method.value == "table" else 8)
             r += 1
         if self.s.percentiles:
+            self.ws[k].tags.append("pct")  # percentile section: its own step ("Duración objetivo")
+            self.marks["percentile_first"] = r
             self.put(k, r, 1, t(self.lang, "prob.percentiles"), self.f_heading)
             r += 1
             self.header(k, r, 1, [t(self.lang, "prob.question"), t(self.lang, "prob.target"), t(self.lang, "prob.z_exact"),
@@ -529,6 +555,7 @@ class _Writer:
                 self.prob_cells[qi] = (r, 8)
                 r += 1
             self.put(k, r, 1, t(self.lang, "prob.table_z_note"))
+            self.ws[k].tags.pop()
         if degenerate:
             self.put(k, r + 1, 1, t(self.lang, "prob.degenerate"))
         ws.set_column(0, 0, 12.7)
@@ -649,15 +676,24 @@ class _Writer:
         for r in range(net.height):
             ws.set_row(r0 - 1 + r, LINE_ROW_HEIGHT)
         for (r, c), line in sorted(net.lines.items()):
+            if line.critical:
+                # neutral version (single black glyphs), recorded only: the progressive layout shows it until the
+                # critical path is known; the classic workbook never contains it
+                neutral = LineCell(dirs=set(line.dirs), arrow=line.arrow)
+                text, align = neutral.text()
+                with self.tagged(kind, "line"):
+                    ws.shadow_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, False))
             text, align = line.text()
-            ws.write_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, line.critical))
+            with self.tagged(kind, "line_crit" if line.critical else "line"):
+                ws.write_string(r0 - 1 + r, c0 - 1 + c, text, self._line_format(align, line.critical))
         for place in net.nodes.values():
             row = rows[place.activity_id]
             r, c = r0 + place.row, c0 + place.col
             static_grey = place.critical and not linked
-            cells = [(0, 0, row.activity_id, 0), (0, 1, row.duration, 4), (1, 0, row.early_start, 5),
-                     (1, 1, row.early_finish, 6), (2, 0, row.late_start, 7), (2, 1, row.late_finish, 8)]
-            for dr, dc, value, src_col in cells:
+            cells = [(0, 0, row.activity_id, 0, "id"), (0, 1, row.duration, 4, "t"), (1, 0, row.early_start, 5, "es"),
+                     (1, 1, row.early_finish, 6, "ef"), (2, 0, row.late_start, 7, "ls"), (2, 1, row.late_finish, 8, "lf")]
+            for dr, dc, value, src_col, tag in cells:
+                self.ws[kind].tags.append(tag)
                 if isinstance(value, str):
                     self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey, text=True))
                 elif linked:
@@ -665,6 +701,8 @@ class _Writer:
                                  value, self._card_format(value, False))
                 else:
                     self.put(kind, r + dr, c + dc, value, self._card_format(value, static_grey))
+                self.ws[kind].tags.pop()
+            self.ws[kind].tags.append("slack")
             slack_fmt = self._card_format(row.total_slack, static_grey)
             ws.merge_range(r + 2, c - 1, r + 2, c, "", slack_fmt)
             if linked:
@@ -674,6 +712,7 @@ class _Writer:
                                f"ABS({_cell(r + 3, c, True)})<{TOL}")
             else:
                 self.put(kind, r + 3, c, row.total_slack, slack_fmt)
+            self.ws[kind].tags.pop()
         node_starts = {c0 + x for x in net.node_columns}
         for c in range(net.width):
             col = c0 + c
@@ -682,8 +721,9 @@ class _Writer:
 
     def _network_legend(self, k: SheetKind, row: int) -> None:
         self.put(k, row, 2, t(self.lang, "network.lines"), self.f_heading)
-        self.ws[k].write_string(row, 1, "═════►", self._line_format("left", True))
-        self.put(k, row + 1, 5, t(self.lang, "network.critical_line"))
+        with self.tagged(k, "legend_crit"):
+            self.ws[k].write_string(row, 1, "═════►", self._line_format("left", True))
+            self.put(k, row + 1, 5, t(self.lang, "network.critical_line"))
         self.ws[k].write_string(row + 1, 1, "─────►", self._line_format("left", False))
         self.put(k, row + 2, 5, t(self.lang, "network.normal_line"))
 
@@ -699,11 +739,13 @@ class _Writer:
                   ((x["card_es"], x["card_ef"]), ("network.legend.es", "network.legend.ef")),
                   ((x["card_ls"], x["card_lf"]), ("network.legend.ls", "network.legend.lf"))]
         for i, ((left, right), (kl, kr)) in enumerate(legend):
-            self.put(k, 4 + i, 2, left, self.f_card_name)
-            self.put(k, 4 + i, 3, right, self.f_card_name)
-            self.put(k, 4 + i, 5, f"{t(self.lang, kl)}  |  {t(self.lang, kr)}")
-        ws.merge_range(6, 1, 6, 2, t(self.lang, "slack"), self.f_card_name)
-        self.put(k, 7, 5, t(self.lang, "network.legend.slack"))
+            with self.tagged(k, ("id", "es", "ls")[i]):
+                self.put(k, 4 + i, 2, left, self.f_card_name)
+                self.put(k, 4 + i, 3, right, self.f_card_name)
+                self.put(k, 4 + i, 5, f"{t(self.lang, kl)}  |  {t(self.lang, kr)}")
+        with self.tagged(k, "slack"):
+            ws.merge_range(6, 1, 6, 2, t(self.lang, "slack"), self.f_card_name)
+            self.put(k, 7, 5, t(self.lang, "network.legend.slack"))
         self._network_legend(k, 8)
         net = plan_cell_network(schedule)
         r0 = 13
@@ -711,19 +753,22 @@ class _Writer:
         self.draw_cell_network(k, net, schedule, r0 + 1, 2, linked=True)
         arc_col = 2 + net.width + 2
         self.put(k, r0 - 1, arc_col, t(self.lang, "network.arcs"), self.f_heading)
-        self.header(k, r0, arc_col, [t(self.lang, "network.from"), t(self.lang, "network.to"),
-                                     t(self.lang, "network.critical_arc")])
+        self.header(k, r0, arc_col, [t(self.lang, "network.from"), t(self.lang, "network.to")])
+        with self.tagged(k, "arc_crit"):
+            self.header(k, r0, arc_col + 2, [t(self.lang, "network.critical_arc")])
         rows = schedule.by_id()
         for i, e in enumerate(self.s.network.edges):
             a, b = rows[e.from_id], rows[e.to_id]
             critical = a.is_critical and b.is_critical and a.early_finish == b.early_start
             self.put(k, r0 + 1 + i, arc_col, e.from_id)
             self.put(k, r0 + 1 + i, arc_col + 1, e.to_id)
-            self.put(k, r0 + 1 + i, arc_col + 2, t(self.lang, "yes" if critical else "no"))
+            with self.tagged(k, "arc_crit"):
+                self.put(k, r0 + 1 + i, arc_col + 2, t(self.lang, "yes" if critical else "no"))
         ws.set_column(arc_col - 1, arc_col + 1, 12.7)
         if self.s.cost_curve is not None and self.has(SheetKind.COST_CURVE):
             note_col = arc_col + 4
-            self.put(k, 3, note_col, t(self.lang, "network.cost_note", unit=self.singular, sheet=self.name(SheetKind.COST_CURVE)))
+            with self.tagged(k, "cost_note"):
+                self.put(k, 3, note_col, t(self.lang, "network.cost_note", unit=self.singular, sheet=self.name(SheetKind.COST_CURVE)))
 
     # ------------------------------------------------------------------ Compresión
 
@@ -732,6 +777,8 @@ class _Writer:
         ws = self.ws[k]
         c = self.s.crashing
         real = [a for a in self.p.activities if not a.is_dummy]
+        tags = self.ws[k].tags
+        tags.append("slopes")
         self.put(k, 1, 1, t(self.lang, "title.crashing"), self.f_title)
         self.put(k, 2, 1, t(self.lang, "crash.slopes"), self.f_heading)
         self.header(k, 4, 1, [t(self.lang, "activity"), t(self.lang, "predecessors"), f"{t(self.lang, 'duration')} (Dn)",
@@ -762,6 +809,7 @@ class _Writer:
         self.put(k, sum_row, 1, t(self.lang, "crash.normal_cost_total"), self.f_heading)
         self.formula(k, sum_row, 4, f"=SUM(D5:D{last})", c.normal_direct_cost)
 
+        tags[-1] = "steps_head"
         r = sum_row + 2
         self.put(k, r, 1, t(self.lang, "crash.steps"), self.f_heading)
         r += 1
@@ -773,6 +821,7 @@ class _Writer:
         for st in c.states:
             r += 1
             state_row[st.step] = r
+            tags[-1] = f"state:{st.step}"  # columns E–G (what is reduced next) belong to the next step
             self.put(k, r, 1, st.step)
             self.put(k, r, 2, st.project_duration)
             if st.step == 0:
@@ -788,8 +837,11 @@ class _Writer:
             for j, a in enumerate(real):
                 self.put(k, r, 8 + j, st.durations[a.id])
         r += 1
+        tags[-1] = "stop"
         self.put(k, r, 1, f"{t(self.lang, 'crash.stop_reason')}: {c.stop_reason}")
         r += 2
+        tags[-1] = "summary"
+        self.marks["crash_summary_first"] = r
         self.put(k, r, 1, t(self.lang, "crash.summary"), self.f_heading)
         r += 1
         self.header(k, r, 1, [f"{t(self.lang, 'duration')} ({self.plural})", t(self.lang, "crash.direct_cost"),
@@ -811,12 +863,15 @@ class _Writer:
         min_cell = None
         if c.optimal is not None:
             r += 2
+            tags[-1] = "optimal"
+            self.marks["crash_optimal_first"] = r
             self.put(k, r, 1, t(self.lang, "crash.optimal"), self.f_heading)
             self.put(k, r, 4, c.optimal.project_duration)
             r += 1
             self.put(k, r, 1, t(self.lang, "crash.min_total_check"), self.f_heading)
             self.formula(k, r, 4, f"=MIN(D{first_summary}:D{last_summary})", c.optimal.total_cost)
             min_cell = (r, 4)
+        tags.pop()
         self.crash = {"slope_row": slope_row, "state_row": state_row, "summary_row": summary_row,
                       "min_cell": min_cell, "activity_col": {a.id: 8 + j for j, a in enumerate(real)}}
         ws.set_column(0, 0, 14.7)
@@ -842,7 +897,12 @@ class _Writer:
         r = 8
         previous = None
         plans = plan_many([st.schedule for st in c.states])
+        tags = self.ws[k].tags
+        self.marks["step_block_first"] = {}
+        self.marks["step_cost_rows"] = {}
         for st, net in zip(c.states, plans):
+            tags.append(f"state:{st.step}")
+            self.marks["step_block_first"][st.step] = r
             self.put(k, r, 1, t(self.lang, "step.label", step=st.step), self.f_heading)
             caption = t(self.lang, "step.caption", step=st.step, duration=number_text(st.project_duration), plural=self.plural)
             self.put(k, r, 3, caption, self.f_heading)
@@ -869,12 +929,15 @@ class _Writer:
             point = next((p for p in c.cost_table if p.project_duration == st.project_duration), None)
             if point is not None and point.indirect_cost is not None:
                 srow2 = info["summary_row"][st.project_duration]
+                tags.append("costpanel")  # indirect / total rows stay hidden until the total-cost step
+                self.marks["step_cost_rows"][st.step] = (pr + 1, pr + 2)
                 pr += 1
                 self.put(k, pr, pc, t(self.lang, "crash.indirect_cost"), self.f_heading)
                 self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow2, 3), point.indirect_cost)
                 pr += 1
                 self.put(k, pr, pc, t(self.lang, "crash.total_cost"), self.f_heading)
                 self.formula(k, pr, pc + 1, "=" + _xref(crash_name, srow2, 4), point.total_cost)
+                tags.pop()
             pr += 1
             self.put(k, pr, pc, t(self.lang, "step.routes"), self.f_heading)
             for path in enumerate_paths(self.s.network):
@@ -893,13 +956,15 @@ class _Writer:
             if st.next_crash_activities:
                 pr += 1
                 slope = sum((slopes[a] for a in st.next_crash_activities), Fraction(0))
-                self.put(k, pr, pc, t(self.lang, "step.next", activities=", ".join(st.next_crash_activities),
-                                      slope=number_text(slope), unit=self.singular))
+                with self.tagged(k, f"next:{st.step}"):
+                    self.put(k, pr, pc, t(self.lang, "step.next", activities=", ".join(st.next_crash_activities),
+                                          slope=number_text(slope), unit=self.singular))
             ws.set_column(pc - 2, pc - 2, CHANNEL_COL_WIDTH)
             ws.set_column(pc - 1, pc - 1, 38)
             ws.set_column(pc, pc, 14)
             r = max(r + 1 + image_rows, pr) + 2
             previous = st
+            tags.pop()
 
     # ------------------------------------------------------------------ Curva de costos
 

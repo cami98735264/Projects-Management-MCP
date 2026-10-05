@@ -67,7 +67,7 @@ def test_exercise_document_end_to_end(exercise_docx, output_dir, tmp_path):
     assert "1 − Φ(Z)" in procedures["e"] and "Φ(Z₂) − Φ(Z₁)" in procedures["f"]
     assert "T_p = t_e + Z · σ" in procedures["g"] and "⌈19.1642⌉ = 20 semanas" in procedures["g"]
 
-    result = generate_workbook(draft, "solucion.xlsx")
+    result = generate_workbook(draft, "solucion.xlsx", layout="classic")
     assert result.ok and result.workbook_validation.passed
     assert result.sheets == ["Enunciado", "Datos", "PERT", "CPM", "Gantt", "Probabilidad", "Resultados"]
     results = openpyxl.load_workbook(result.path)["Resultados"]
@@ -102,5 +102,5 @@ def test_reference_pert_example_end_to_end(output_dir):
     answers = {a.label: a.answer for a in solution.answers}
     assert "A: t_e = 3, σ² = 4/9" in answers["b"] and "D: t_e = 4, σ² = 1" in answers["b"]
 
-    result = generate_workbook(draft, "ejemplo.xlsx")
+    result = generate_workbook(draft, "ejemplo.xlsx", layout="classic")
     assert result.ok and "Red AON" in result.sheets

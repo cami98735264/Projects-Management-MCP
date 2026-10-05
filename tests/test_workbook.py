@@ -41,7 +41,7 @@ def test_formulas_are_live_and_validated(output_dir):
     draft = exercise_draft(requested_outputs=["FULL_REPORT"],
                            probability_queries=[ProbabilityQuery(id="p", kind="AT_MOST", upper_bound=13),
                                                 ProbabilityQuery(id="q", kind="PERCENTILE_TO_DURATION", target_probability=0.98)])
-    result = generate_workbook(draft, "live.xlsx")
+    result = generate_workbook(draft, "live.xlsx", layout="classic")
     report = result.workbook_validation
     assert result.ok, report.issues[:5]
     assert result.sheets == ["Enunciado", "Datos", "PERT", "CPM", "Red AON", "Gantt", "Probabilidad", "Resultados"]
@@ -65,7 +65,7 @@ def test_formulas_are_live_and_validated(output_dir):
 
 
 def test_validator_detects_broken_workbooks(output_dir, tmp_path):
-    result = generate_workbook(ProjectDraft(activities=[act("A", [], 2), act("B", ["A"], 3)], requested_outputs=["SLACK"]), "base.xlsx")
+    result = generate_workbook(ProjectDraft(activities=[act("A", [], 2), act("B", ["A"], 3)], requested_outputs=["SLACK"]), "base.xlsx", layout="classic")
     assert result.ok
     wb = openpyxl.load_workbook(result.path)
     ws = wb["CPM"]
@@ -94,7 +94,7 @@ def test_output_is_reproducible_and_paths_are_guarded(output_dir):
 def test_english_workbook(output_dir):
     draft = ProjectDraft(metadata=ProjectMetadata(language="en"), activities=[act("A", [], 2), act("B", ["A"], 3)],
                          requested_outputs=["GANTT", "CRITICAL_PATH"])
-    result = generate_workbook(draft, "en.xlsx")
+    result = generate_workbook(draft, "en.xlsx", layout="classic")
     assert result.ok and result.sheets == ["Problem", "Activity Data", "CPM", "Gantt", "Final Results"]
     procedures = {a.outputs[0]: a.procedure for a in result.answers}
     assert "1. Critical activities (slack = 0)\n   A, B" in procedures["CRITICAL_PATH"]

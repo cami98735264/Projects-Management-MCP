@@ -120,7 +120,7 @@ def test_workbook_network_is_cells_not_pictures(output_dir):
     import openpyxl
     draft = ProjectDraft.model_validate(json.loads(
         (EXAMPLES / "taller2_problema2_pert" / "project_draft.json").read_text(encoding="utf-8")))
-    result = generate_workbook(draft, "red_celdas.xlsx")
+    result = generate_workbook(draft, "red_celdas.xlsx", layout="classic")
     assert result.ok and result.workbook_validation.passed
     with zipfile.ZipFile(result.path) as book:
         assert not [n for n in book.namelist() if n.startswith("xl/media/")]

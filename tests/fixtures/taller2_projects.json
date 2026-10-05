@@ -1,0 +1,309 @@
+{
+ "title": "Taller 2 (Version Nueva) - Administracion de Proyectos",
+ "projects": [
+  {
+   "metadata": {
+    "title": "Constructora Andina - Puente Huila (CPM)",
+    "language": "es",
+    "time_unit": {
+     "code": "week"
+    }
+   },
+   "calculation_method": "CPM",
+   "activities": [
+    {
+     "id": "A",
+     "predecessors": [],
+     "duration": 4,
+     "crash": {
+      "crash_duration": 3,
+      "normal_cost": 6000,
+      "crash_cost": 8000
+     }
+    },
+    {
+     "id": "B",
+     "predecessors": [],
+     "duration": 6,
+     "crash": {
+      "crash_duration": 4,
+      "normal_cost": 9000,
+      "crash_cost": 13000
+     }
+    },
+    {
+     "id": "C",
+     "predecessors": [
+      "A"
+     ],
+     "duration": 8,
+     "crash": {
+      "crash_duration": 6,
+      "normal_cost": 12000,
+      "crash_cost": 15000
+     }
+    },
+    {
+     "id": "D",
+     "predecessors": [
+      "A"
+     ],
+     "duration": 7,
+     "crash": {
+      "crash_duration": 6,
+      "normal_cost": 8000,
+      "crash_cost": 9500
+     }
+    },
+    {
+     "id": "E",
+     "predecessors": [
+      "B"
+     ],
+     "duration": 9,
+     "crash": {
+      "crash_duration": 5,
+      "normal_cost": 10000,
+      "crash_cost": 16000
+     }
+    },
+    {
+     "id": "F",
+     "predecessors": [
+      "C",
+      "D"
+     ],
+     "duration": 5,
+     "crash": {
+      "crash_duration": 4,
+      "normal_cost": 7000,
+      "crash_cost": 8500
+     }
+    },
+    {
+     "id": "G",
+     "predecessors": [
+      "E",
+      "F"
+     ],
+     "duration": 10,
+     "crash": {
+      "crash_duration": 7,
+      "normal_cost": 14000,
+      "crash_cost": 20000
+     }
+    }
+   ],
+   "crashing": {
+    "indirect_costs": [
+     {
+      "duration": 16,
+      "cost": 0
+     },
+     {
+      "duration": 17,
+      "cost": 0
+     },
+     {
+      "duration": 18,
+      "cost": 0
+     },
+     {
+      "duration": 19,
+      "cost": 0
+     },
+     {
+      "duration": 20,
+      "cost": 0
+     },
+     {
+      "duration": 21,
+      "cost": 0
+     },
+     {
+      "duration": 22,
+      "cost": 0
+     },
+     {
+      "duration": 23,
+      "cost": 0
+     },
+     {
+      "duration": 24,
+      "cost": 1800
+     },
+     {
+      "duration": 25,
+      "cost": 3600
+     },
+     {
+      "duration": 26,
+      "cost": 5400
+     },
+     {
+      "duration": 27,
+      "cost": 7200
+     },
+     {
+      "duration": 28,
+      "cost": 9000
+     },
+     {
+      "duration": 29,
+      "cost": 10800
+     },
+     {
+      "duration": 30,
+      "cost": 12600
+     }
+    ]
+   },
+   "questions": [
+    {
+     "label": "a",
+     "text": "Duracion normal del proyecto y su costo",
+     "outputs": [
+      "EARLY_LATE_TIMES",
+      "CRITICAL_PATH",
+      "EXPECTED_DURATION",
+      "CRASHING"
+     ]
+    },
+    {
+     "label": "b",
+     "text": "Meta 23 semanas, penalizacion 1800 USD por semana de retraso: que duracion planear",
+     "outputs": [
+      "CRASHING"
+     ]
+    }
+   ]
+  },
+  {
+   "metadata": {
+    "title": "Licitacion Maria Camila Rojas (PERT)",
+    "language": "es",
+    "time_unit": {
+     "code": "week"
+    }
+   },
+   "calculation_method": "PERT",
+   "activities": [
+    {
+     "id": "A",
+     "predecessors": [],
+     "optimistic_duration": 2,
+     "most_likely_duration": 3,
+     "pessimistic_duration": 4
+    },
+    {
+     "id": "B",
+     "predecessors": [
+      "A"
+     ],
+     "optimistic_duration": 2,
+     "most_likely_duration": 4,
+     "pessimistic_duration": 6
+    },
+    {
+     "id": "C",
+     "predecessors": [
+      "A"
+     ],
+     "optimistic_duration": 3,
+     "most_likely_duration": 5,
+     "pessimistic_duration": 13
+    },
+    {
+     "id": "D",
+     "predecessors": [
+      "B"
+     ],
+     "optimistic_duration": 1,
+     "most_likely_duration": 2,
+     "pessimistic_duration": 3
+    },
+    {
+     "id": "E",
+     "predecessors": [
+      "B",
+      "C"
+     ],
+     "optimistic_duration": 2,
+     "most_likely_duration": 3,
+     "pessimistic_duration": 4
+    },
+    {
+     "id": "F",
+     "predecessors": [
+      "D",
+      "E"
+     ],
+     "optimistic_duration": 1,
+     "most_likely_duration": 2,
+     "pessimistic_duration": 9
+    }
+   ],
+   "probability_queries": [
+    {
+     "id": "d",
+     "kind": "AT_MOST",
+     "upper_bound": 16
+    },
+    {
+     "id": "e",
+     "kind": "PERCENTILE_TO_DURATION",
+     "target_probability": 0.7
+    }
+   ],
+   "questions": [
+    {
+     "label": "a",
+     "text": "Construya la red de proyecto",
+     "outputs": [
+      "NETWORK_DIAGRAM"
+     ]
+    },
+    {
+     "label": "b",
+     "text": "Media y varianza de la duracion de cada actividad",
+     "outputs": [
+      "ACTIVITY_ESTIMATES",
+      "VARIANCE"
+     ]
+    },
+    {
+     "label": "c",
+     "text": "Ruta critica media",
+     "outputs": [
+      "EARLY_LATE_TIMES",
+      "SLACK",
+      "CRITICAL_PATH",
+      "EXPECTED_DURATION"
+     ]
+    },
+    {
+     "label": "d",
+     "text": "Probabilidad de terminar en 16 semanas",
+     "outputs": [
+      "PROBABILITY_QUERY"
+     ],
+     "probability_query_ids": [
+      "d"
+     ]
+    },
+    {
+     "label": "e",
+     "text": "Licitar solo si P(cumplir 16 semanas) >= 70%: que aconsejaria",
+     "outputs": [
+      "PROBABILITY_QUERY",
+      "PERCENTILE_DURATION"
+     ],
+     "probability_query_ids": [
+      "d",
+      "e"
+     ]
+    }
+   ]
+  }
+ ]
+}

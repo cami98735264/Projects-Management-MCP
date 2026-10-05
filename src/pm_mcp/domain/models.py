@@ -83,6 +83,13 @@ class ProbabilityMethod(StrEnum):
     table Z whose Φ reaches the target, durations rounded up to whole units."""
 
 
+class WorkbookLayout(StrEnum):
+    PROGRESSIVE = "progressive"
+    """Cumulative step-by-step sheets: each sheet repeats the previous one and adds only the new step."""
+    CLASSIC = "classic"
+    """One sheet per topic (the original layout)."""
+
+
 class VarianceStrategy(StrEnum):
     MAX_VARIANCE_PATH = "max_variance_path"
     ALL_CRITICAL_ACTIVITIES = "all_critical_activities"
@@ -189,8 +196,9 @@ class Assumption(_Strict):
 class QuestionItem(_Strict):
     """One numbered part of the original exercise, answered in order in the Final Results sheet."""
 
-    label: str
-    text: str
+    label: str = Field(description="Part label exactly as in the exercise: 'a', 'b', '1', …")
+    text: str = Field(description="The ORIGINAL question copied literally (verbatim, same language and wording), not a "
+                                  "summary or paraphrase. Shown as-is in the questions table and the answers.")
     outputs: list[RequestedOutput] = Field(default_factory=list)
     probability_query_ids: list[str] = Field(default_factory=list)
     delay_activity_ids: list[ActivityId] = Field(default_factory=list)
@@ -237,6 +245,12 @@ class ProjectMetadata(_Strict):
     time_unit: TimeUnit = Field(default_factory=TimeUnit)
     source_description: str | None = None
     language: ReportLanguage = ReportLanguage.ES
+    context: str | None = Field(
+        default=None,
+        description="Narrative text of the problem statement copied LITERALLY (verbatim): company, project, goals, "
+                    "deadlines, penalties/bonuses. Exclude the data tables and the questions. Leave unset when the "
+                    "statement has no narrative; never write or summarise it yourself. Shown on the first sheet "
+                    "('1.1 Contexto') of the progressive workbook.")
 
 
 class AnalysisOptions(_Strict):
@@ -246,6 +260,11 @@ class AnalysisOptions(_Strict):
     )
     variance_strategy: VarianceStrategy = VarianceStrategy.MAX_VARIANCE_PATH
     include_dummies_in_gantt: bool = False
+    workbook_layout: WorkbookLayout = Field(
+        default=WorkbookLayout.PROGRESSIVE,
+        description="'progressive' (default): one sheet per solution step, each sheet = the previous one + the new "
+                    "step highlighted in yellow, the last sheet holds the whole solution. 'classic': one sheet per "
+                    "topic (Enunciado, Datos, PERT, CPM, Red AON, Gantt, …, Resultados).")
 
 
 class ProjectDraft(_Strict):

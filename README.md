@@ -164,7 +164,7 @@ All project tools take `project: ProjectDraft` and return `Envelope{ok, result, 
 | `calculate_crashing_schedule` | `CrashingResult` | Slopes, states, stop reason, cost table, optimum |
 | `solve_project` | `ProjectSolution` | Everything requested, validated, with per-question answers |
 | `validate_calculations(project, solution?)` | check report | Also detects a tampered solution passed back in |
-| `generate_solution_workbook(project, output_path, overwrite?)` | path, sheets, answers, both reports | Writes to a temp file, validates, then publishes; an invalid file is kept as `*.invalid.xlsx` |
+| `generate_solution_workbook(project, output_path, overwrite?)` | path, sheets, answers, both reports, `layout` | Writes to a temp file, validates, then publishes; an invalid file is kept as `*.invalid.xlsx`. Progressive by default (§10.1), classic fallback with a note |
 | `validate_workbook(path, project?)` | `WorkbookValidationReport` | With a project, every computed cell is compared with the engine |
 
 Resources: `pm://methodology`, `pm://schema/project-draft`. Prompt: `solve_exercise_workflow`.
@@ -214,6 +214,56 @@ Sheets are planned by `plan_sheets(project, outputs)`:
 
 Derived numbers are **live formulas** chained from Datos, so changing an estimate recalculates the whole workbook (tested). Each formula is written with the engine's value cached.
 
+### 10.1 Progressive layout (default: `options.workbook_layout = "progressive"`)
+
+The table above is the **classic** layout (`"classic"`, unchanged and still available, also via
+`generate_workbook(..., layout="classic")`). By default the workbook is **progressive and cumulative**: one sheet per
+solution step, every sheet = the previous sheet + the new step, and the last sheet holds the whole solution.
+
+| Sheet | Adds |
+|---|---|
+| `1.1 Contexto` | title, `metadata.context` (literal narrative of the statement; only the title when it is unset — nothing is invented), time unit |
+| `1.2 Datos` | the Datos table (+ the arrow→node trace when the network came from an AoA figure) |
+| `1.3 Preguntas` | part / literal question (`QuestionItem.text`); only if there are questions |
+| `N Tiempos esperados` | PERT only: table A–J (no "critical?" column, no project σ²) |
+| `N Red del proyecto` | AON network with only Act and t, single black arrows, arcs without "critical?"; CPM table A–D |
+| `N Pase adelante` / `Pase atrás` | IC/TC (+ D2) / IL/TL, in the network nodes and in the CPM table |
+| `N Holguras y ruta crítica` | slack columns, row 3, shading, red double arrows, arc "critical?" column, PERT column K, CPM determinístico |
+| `N Gantt` | the Gantt (if requested) |
+| `N Varianza del proyecto`, `Probabilidad`, `Duración objetivo` | PERT σ²/σ rows, the probability table, the percentile table |
+| `N Pendientes` | slopes, normal direct cost, state 0 row and its network |
+| `N Compresión 27-26`, … | one per engine step (down to the last one, even past the optimum): E–G of the previous state, the new state row and its network; the stop reason on the last one |
+| `N Costo total` / `Decisión` | direct + indirect = total table (and the hidden indirect/total rows of every step panel) / optimum rows |
+| `N Curva de costos`, `N Respuestas` | the cost curve; the full Resultados block at the bottom |
+
+Rows 1–2 of every sheet are a yellow `🆕 Paso N — <title>` banner with a 1–2 line note (es/en, `i18n.py`
+`prog.*`) saying what is computed, with which formula and why. Every block has a header row (`🆕 Paso N — …` when
+it changed on this sheet, plain `Paso k — …` otherwise); cells new on the sheet are yellow unless they have their own
+fill.
+
+How it works (`output/recording.py`, `output/progressive.py`): the classic writer draws every sheet through a
+recording proxy (forwards every call unchanged — the classic file is byte-identical — and records it with its
+format spec and *tags* such as `es`, `slack`, `line_crit`, `state:3`, `costpanel`). A mask assigns every record to a
+step; the layout is computed once for the last sheet (so nothing moves between sheets) and every sheet replays the
+records whose step ≤ its own, translating coordinates and rewriting formula / conditional-format references with
+openpyxl's Tokenizer (`$` kept). Lanes, because column widths are global to a sheet: tables on the left in uniform
+13.7-wide columns (a wider classic column becomes several merged cells), then the main network, the per-step networks
+and the Gantt side by side with their own widths (so box-drawing arrows still join), each separated by a fence column;
+the drawing lanes start below the problem blocks; Resultados goes below the bottom of every lane.
+
+Guarantees (tested in `tests/test_progressive.py`): formulas only reference their own sheet and only cells already
+visible on it (checked while writing; the builder raises otherwise); every sheet evaluates on its own; no cell, double
+arrow, shading or conditional format appears before its step; one sheet per engine compression step; the last sheet
+contains every value of the classic Resultados; sheet names ≤ 27 characters (fit `P12 ` from pm-solve-api's merge);
+LibreOffice recalculates every formula of the Taller 2 to the engine values. Expected values of the progressive file
+are the classic expectations of each source cell. If the progressive build raises or fails `validate_workbook`, the
+classic workbook is delivered instead, with a note in `notes` and a warning in the log (`result.layout` says which
+one was written). `validate_workbook(path, project)` regenerates with the layout of the file it checks.
+
+Pitfalls: a merged cell never lets text overflow, so plain text cells are merged as far right as their text needs
+(up to the next cell of the final layout); the fence columns hold a `" "` in rows with text so a long line stops at its
+lane; static text that mentions a classic sheet name (e.g. "ver hoja 'Compresión'") is kept as written.
+
 ## 11. Validation layer
 
 * **`validate_calculations`** runs after every solve; any failure is a hard error. Its checks:
@@ -232,7 +282,7 @@ Derived numbers are **live formulas** chained from Datos, so changing an estimat
   * delays equal to slack.
 * **`validate_workbook`** runs after every write. It opens the file with openpyxl and checks promised versus present sheets, error tokens, parseability, missing sheets and unknown functions (also inside conditional formats), and circular or dangling references. It evaluates **every formula** and compares the result with both the cached value and the engine value.
 
-## 12. Tests (`pytest`: 110 passing)
+## 12. Tests (`pytest`: 175 passing)
 
 | Area | File |
 |---|---|
@@ -250,6 +300,7 @@ Derived numbers are **live formulas** chained from Datos, so changing an estimat
 | Formula evaluator | `test_formula_eval.py` |
 | Sheet planning, live-formula recalculation, broken-workbook detection, reproducibility, path guards | `test_workbook.py` |
 | **Golden:** docx → answers → workbook; reference PERT example → workbook | `test_golden_exercises.py` |
+| Progressive layout: every fixture + penalty crashing, cumulative masks, nothing ahead, own-sheet formulas, compression sheets, merge.py, LibreOffice recalculation of the Taller 2, classic fallback | `test_progressive.py` |
 | CPM-only English days with 2 critical paths; BOTH in months with a dummy node and fractional times; 60-activity random DAG | `test_synthetic.py` |
 | MCP JSON round trip, tampered solution, typed errors, no-hardcoding guard | `test_server_and_guards.py` |
 

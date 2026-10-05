@@ -96,7 +96,7 @@ def test_solution_and_workbook_carry_the_curve(output_dir):
     assert [c.name for c in solution.validation.checks if "cost curve" in c.name]
     assert solution.cost_curve.total_cost == 800
 
-    result = generate_workbook(draft, "curva.xlsx")
+    result = generate_workbook(draft, "curva.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     assert result.sheets == ["Enunciado", "Datos", "CPM", "Gantt", "Compresión", "Curva de costos", "Resultados"]
 
@@ -115,7 +115,7 @@ def test_solution_and_workbook_carry_the_curve(output_dir):
 def test_workbook_without_compression_links_the_normal_costs_of_the_data_sheet(output_dir):
     draft = ProjectDraft(metadata=ProjectMetadata(title="Curva S normal"), activities=normal_project(),
                          requested_outputs=["GANTT", "CRITICAL_PATH"])
-    result = generate_workbook(draft, "curva_normal.xlsx")
+    result = generate_workbook(draft, "curva_normal.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     assert result.sheets == ["Enunciado", "Datos", "CPM", "Gantt", "Curva de costos", "Resultados"]
     sheet = openpyxl.load_workbook(result.path)["Curva de costos"]
@@ -129,7 +129,7 @@ def test_workbook_without_compression_links_the_normal_costs_of_the_data_sheet(o
 def test_no_charts_anywhere_only_a_pointer_to_the_cost_table(output_dir):
     draft = crashed_draft()
     draft = draft.model_copy(update={"requested_outputs": [*draft.requested_outputs, RequestedOutput.NETWORK_DIAGRAM]})
-    result = generate_workbook(draft, "curva_red.xlsx")
+    result = generate_workbook(draft, "curva_red.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     wb = openpyxl.load_workbook(result.path)
     network = wb["Red AON"]
@@ -147,7 +147,7 @@ def test_one_cell_network_per_compression_step(output_dir):
     with that step's durations."""
     draft = crashed_draft()
     draft = draft.model_copy(update={"requested_outputs": [*draft.requested_outputs, RequestedOutput.NETWORK_DIAGRAM]})
-    result = generate_workbook(draft, "pasos.xlsx")
+    result = generate_workbook(draft, "pasos.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     steps = len(solve_project(normalized(draft)).crashing.states)
     assert steps == 3, "7 weeks, then 6 (the recommended duration), then A's minimum at 5"
@@ -175,6 +175,6 @@ def test_network_without_crashing_has_no_step_sheet(output_dir):
     activities = [act("A", [], 2), act("B", ["A"], 3), act("C", [], 4)]
     draft = ProjectDraft(metadata=ProjectMetadata(title="Sin compresión"), activities=activities,
                          requested_outputs=[RequestedOutput.NETWORK_DIAGRAM])
-    result = generate_workbook(draft, "sin_pasos.xlsx")
+    result = generate_workbook(draft, "sin_pasos.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     assert "Red AON por paso" not in result.sheets and "Red AON" in result.sheets

@@ -26,7 +26,7 @@ def test_cpm_only_days_english_two_critical_paths(output_dir):
     answers = {a.outputs[0]: a.answer for a in solution.answers}
     assert "Critical paths: S2 → Q → T → W; S2 → Q → V → X" in answers["CRITICAL_PATH"]
     assert "Activity P can be delayed up to 1 day" in answers["ACTIVITY_MAX_DELAY"]
-    result = generate_workbook(draft, "launch.xlsx")
+    result = generate_workbook(draft, "launch.xlsx", layout="classic")
     assert result.ok and result.sheets == ["Problem", "Activity Data", "CPM", "Gantt", "Final Results"]
 
 
@@ -51,7 +51,7 @@ def test_both_methods_months_dummy_node_custom_queries(output_dir):
     # B early 0–3.5 (column 4 partial); B late: LF = min(x.LS = C.LS = 9.5 − 5.5 = 4, D.LS = 7.5) = 4 → LS 0.5 (column 1 partial)
     assert gantt_b.early_bar_columns == [1, 2, 3, 4] and gantt_b.late_bar_columns == [1, 2, 3, 4]
     assert gantt_b.total_slack == F(1, 2) and gantt_b.partial_columns == [1, 4]
-    result = generate_workbook(draft, "both.xlsx")
+    result = generate_workbook(draft, "both.xlsx", layout="classic")
     assert result.ok, result.workbook_validation.issues[:5]
     assert {"CPM determinístico", "Red AON", "Gantt", "Probabilidad"} <= set(result.sheets)
 
