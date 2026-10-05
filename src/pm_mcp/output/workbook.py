@@ -29,7 +29,7 @@ from pm_mcp.engine.network import enumerate_paths
 from pm_mcp.i18n import t
 from pm_mcp.output.answers import OUTPUT_LABELS
 from pm_mcp.output.formula_eval import excel_text
-from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, LineCell, plan_cell_network, plan_many
+from pm_mcp.output.network_cells import NODE_COLS, NODE_ROWS, CellNetwork, LineCell, plan_many
 from pm_mcp.output.recording import RecordingSheet
 from pm_mcp.solution import ProjectSolution, QuestionAnswer
 
@@ -665,6 +665,16 @@ class _Writer:
             self._card_formats[key] = self._format(spec)
         return self._card_formats[key]
 
+    def _network_plans(self) -> list[CellNetwork]:
+        """Cell plans of the main network followed by one per crashing step, all sharing one column structure, so
+        the progressive layout can stack them in the same columns without breaking any arrow."""
+        if not hasattr(self, "_plans"):
+            schedules = [self.s.cpm]
+            if self.has(SheetKind.STEP_NETWORK) and self.s.crashing is not None:
+                schedules += [st.schedule for st in self.s.crashing.states]
+            self._plans = plan_many(schedules)
+        return self._plans
+
     def draw_cell_network(self, kind: SheetKind, net: CellNetwork, schedule: CpmResult, r0: int, c0: int,
                           linked: bool) -> None:
         """Draw ``net`` with its top-left corner at (r0, c0) (1-based). Node cells are formulas linked to the CPM
@@ -747,7 +757,7 @@ class _Writer:
             ws.merge_range(6, 1, 6, 2, t(self.lang, "slack"), self.f_card_name)
             self.put(k, 7, 5, t(self.lang, "network.legend.slack"))
         self._network_legend(k, 8)
-        net = plan_cell_network(schedule)
+        net = self._network_plans()[0]
         r0 = 13
         self.put(k, r0 - 1, 2, t(self.lang, "network.cards"), self.f_heading)
         self.draw_cell_network(k, net, schedule, r0 + 1, 2, linked=True)
@@ -896,7 +906,7 @@ class _Writer:
         self._network_legend(k, 4)
         r = 8
         previous = None
-        plans = plan_many([st.schedule for st in c.states])
+        plans = self._network_plans()[1:]
         tags = self.ws[k].tags
         self.marks["step_block_first"] = {}
         self.marks["step_cost_rows"] = {}

@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -149,6 +150,47 @@ def test_every_sheet_is_cumulative_and_shows_nothing_ahead(built, name):
             lost = [key for key in previous if key not in here and key not in build.structural and key[0] > 2]
             assert not lost, f"{ws.title} dropped cells of the previous sheet: {lost[:5]}"
         previous = here
+
+
+@pytest.mark.parametrize("name", list(CASES))
+def test_no_emoji_anywhere(built, name):
+    import re
+
+    emoji = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F]")
+    _, result, _, _, _ = built[name]
+    for ws in sheets(result.path).worksheets:
+        bad = [(c.coordinate, c.value) for row in ws.iter_rows() for c in row
+               if isinstance(c.value, str) and emoji.search(c.value)]
+        assert not bad, f"{ws.title}: {bad[:3]}"
+
+
+@pytest.mark.parametrize("name", list(CASES))
+def test_networks_are_on_screen_below_the_statement(built, name):
+    """The AON network (and, with crashing, the network of every step) starts in the first columns and comes
+    right after the statement, before the tables: off to the right it looked as if the nodes had been removed."""
+    _, result, _, _, build = built[name]
+    wb = sheets(result.path)
+    last = wb.worksheets[-1]
+    blocks = {b.key: b for b in build.blocks}
+    if "net" not in blocks:
+        pytest.skip("no network requested")
+    net = blocks["net"]
+    assert net.first_col == 1
+    tables = [b for b in blocks.values() if b.lane == "left"]
+    assert all(net.top < b.top for b in tables)
+    tops = [b.top for b in blocks.values() if b.lane == "top"]
+    assert all(t < net.top for t in tops)
+    # node cards live within the first 40 columns of the final sheet
+    ids = {a.id for a in built[name][3].project.activities if not a.is_dummy}
+    card_cols = [int(c.column or 0) for row in last.iter_rows(min_row=net.top, max_row=net.top + net.max_row)
+                 for c in row if c.value in ids]
+    assert card_cols and max(card_cols) <= 40
+    if "step_net" in blocks:
+        step = blocks["step_net"]
+        assert step.first_col == 1
+        labels = [c.value for row in last.iter_rows(min_col=1, max_col=1) for c in row
+                  if isinstance(c.value, str) and re.fullmatch(r"(PASO|STEP) \d+", c.value.strip().upper())]
+        assert len(labels) == len(built[name][3].crashing.states)
 
 
 @pytest.mark.parametrize("name", list(CASES))

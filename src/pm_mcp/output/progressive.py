@@ -16,11 +16,13 @@ xlsxwriter (not openpyxl) writes the file because the round-trip validator compa
 
 Lanes (column widths are global to a sheet, so blocks that need different widths get different columns):
 
-* rows 1–2: banner of the step; then the problem blocks (context, data, questions) full width on the left;
-* below them, side by side: the table lane (uniform columns of :data:`COL_W`; a wider classic column is spread
-  over several merged cells), the main network lane, the per-step network lane and the Gantt lane (each keeps
-  its classic column widths, so the box-drawing arrows still join);
-* the answers (Resultados) go last, below the bottom of every lane, so their tall rows never cut a drawing.
+* rows 1–2: banner of the step; then every block one below the other (:data:`LANE_ORDER`): the problem blocks
+  (context, data, questions), the main AON network, the tables (PERT, CPM, probability, crashing, cost curve),
+  the Gantt chart, the network of every crashing step and the answers (Resultados);
+* the two drawings keep their classic columns from column A (main and step networks share one column structure,
+  so the box-drawing arrows still join); every other block spreads each classic column over as many merged
+  columns as it needs, so nothing is pushed off screen to the right.
+* new content is highlighted with a yellow fill; no emoji anywhere (:func:`_clean`).
 """
 
 from __future__ import annotations
@@ -45,10 +47,11 @@ from pm_mcp.solution import ProjectSolution
 
 NEW_FILL = "#FFF2CC"     # cells that are new in the current sheet
 COL_W = 13.7             # uniform column width of the table lane
-FENCE_W = 1.7            # empty column between lanes; holds a " " where text could spill into the next lane
 DEFAULT_W = 8.43         # Excel's default column width
 MAX_TAB = 27             # ≤ 31 even after merge.py adds "P1 " / "P12 "
-NEW_MARK = "🆕"
+DRAWN = ("net", "step_net")                                       # lanes kept in their own classic columns
+LANE_ORDER = ("top", "net", "left", "gantt", "step_net", "bottom")  # reading order, top to bottom
+_EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u200D]")
 _BAD_TAB_CHARS = re.compile(r"[\[\]:*?/\\]")
 _REF = re.compile(r"^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$")
 
@@ -98,6 +101,7 @@ class ProgressiveBuild(WorkbookBuild):
     structural: set[tuple[int, int]] = field(default_factory=set)         # banner, block headers, fences
     tab_cells: dict[str, dict[tuple[int, int], int]] = field(default_factory=dict)  # tab → cell → step index
     classic: WorkbookBuild | None = None
+    blocks: list[_Block] = field(default_factory=list)                     # final layout of every block
 
 
 # ---------------------------------------------------------------------------------------------- helpers
@@ -135,6 +139,11 @@ def _parse_ref(text: str) -> tuple[bool, int, bool, int]:
 
 def _ref_text(abs_col: bool, col: int, abs_row: bool, row: int) -> str:
     return f"{'$' if abs_col else ''}{xl_col_to_name(col - 1)}{'$' if abs_row else ''}{row}"
+
+
+def _clean(text: str) -> str:
+    """Text without emoji (the workbook must look hand-made): drops pictographs and joins the spaces they leave."""
+    return re.sub(r"  +", " ", _EMOJI.sub("", text)).strip() if _EMOJI.search(text) else text
 
 
 def _text_height(text: str, width: float) -> float:
@@ -408,63 +417,45 @@ class _Progressive:
         return out
 
     def _layout(self) -> None:
-        uniform = lambda col: COL_W  # noqa: E731
-        spanned = [b for b in self.blocks if b.lane in ("top", "left")]
-        for b in spanned:
-            b.cols = self._span_map(b, 1, uniform)
-        self.left_width = max(max(last for _, last in b.cols.values()) for b in spanned)
-        self.widths: dict[int, float] = {c: COL_W for c in range(1, self.left_width + 1)}
-        self.fences: dict[str, int] = {"left": self.left_width + 1}
-        self.widths[self.left_width + 1] = FENCE_W
-        cur = self.left_width + 2
-        for lane in ("net", "step_net", "gantt"):
-            for b in self.blocks:
-                if b.lane != lane:
-                    continue
-                b.cols = {c: (cur + c - 1, cur + c - 1) for c in range(1, b.max_col + 1)}
+        # The drawings (main network and the network of every crashing step) keep their classic columns from
+        # column A: they share one column structure (_Writer._network_plans), so they stack without breaking an
+        # arrow. Every other block is spread over those widths, and all blocks go one below the other, so the
+        # networks are on screen right under the statement instead of thousands of pixels to the right.
+        self.widths: dict[int, float] = {}
+        for b in self.blocks:
+            if b.lane in DRAWN:
+                b.cols = {c: (c, c) for c in range(1, b.max_col + 1)}
                 for c in range(1, b.max_col + 1):
-                    self.widths[cur + c - 1] = b.widths.get(c, DEFAULT_W)
-                cur += b.max_col
-                self.fences[lane] = cur
-                self.widths[cur] = FENCE_W
-                cur += 1
-        bottom = [b for b in self.blocks if b.lane == "bottom"]
-        for b in bottom:
-            b.cols = self._span_map(b, 1, lambda col: self.widths.get(col, COL_W))
-            for _, last in b.cols.values():
-                for col in range(1, last + 1):
-                    self.widths.setdefault(col, COL_W)
+                    self.widths[c] = max(self.widths.get(c, 0.0), b.widths.get(c, DEFAULT_W))
+        width = lambda col: self.widths.get(col, COL_W)  # noqa: E731
+        for b in self.blocks:
+            if b.lane not in DRAWN:
+                b.cols = self._span_map(b, 1, width)
+                for _, last in b.cols.values():
+                    for col in range(1, last + 1):
+                        self.widths.setdefault(col, COL_W)
+        self.fences: dict[str, int] = {}  # stacked lanes: no text can spill into another lane
+        self.left_width = max(max(last for _, last in b.cols.values())
+                              for b in self.blocks if b.lane in ("top", "left"))
         for b in self.blocks:
             b.first_col = min(first for first, _ in b.cols.values())
             b.last_col = max(last for _, last in b.cols.values())
             if b.lane in ("top", "left"):
                 b.last_col = max(b.last_col, self.left_width)
-        # rows: banner 1–2, problem blocks from row 4, then the lanes side by side, then the answers
+        # rows: banner 1–2, then from row 4 every block in reading order, the answers last
         row = 4
-        for b in self.blocks:
-            if b.lane == "top":
-                b.top = row
-                row = b.top + b.max_row + 2
-        lanes_top = row
-        ends = [lanes_top]
-        for lane in ("left", "net", "step_net", "gantt"):
-            row = lanes_top
+        for lane in LANE_ORDER:
             for b in self.blocks:
                 if b.lane == lane:
                     b.top = row
                     row = b.top + b.max_row + 2
-            ends.append(row)
-        row = max(ends) + 1
-        for b in bottom:
-            b.top = row
-            row = b.top + b.max_row + 2
 
     def _extents(self, b: _Block) -> dict[tuple[int, int], int]:
         """Last destination column of every classic cell of a spanned block. A plain text cell (no border, fill or
         wrap) is merged as far to the right as its text needs, up to the next cell of the final layout in that
         row (merged cells never let text overflow, so without this a title would be cut at its first column)."""
         out: dict[tuple[int, int], int] = {}
-        if b.lane not in ("top", "left", "bottom"):
+        if b.lane in DRAWN:
             return {key: self._dest(b, *key, end=True)[1] for key in self.hist[b.source.name]}
         occupied: dict[int, list[int]] = {}
         for (r, c) in self.hist[b.source.name]:
@@ -552,7 +543,7 @@ class _Progressive:
         elif rec.vtype == "number":
             ws.write_number(r - 1, c - 1, rec.value, fmt)
         elif rec.vtype == "string":
-            ws.write_string(r - 1, c - 1, rec.value, fmt)
+            ws.write_string(r - 1, c - 1, _clean(rec.value), fmt)
         elif fmt is not None:
             ws.write_blank(r - 1, c - 1, None, fmt)
 
@@ -575,9 +566,9 @@ class _Progressive:
                 ws.set_column(col - 1, col - 1, width)
             ws.set_row(0, 21)
             ws.set_row(1, 33)
-            ws.merge_range(0, 0, 0, self.left_width - 1, f"{NEW_MARK} {step.heading(lang)} — {step.title}",
+            ws.merge_range(0, 0, 0, self.left_width - 1, _clean(f"{step.heading(lang)} — {step.title}"),
                            self._fmt(banner_spec))
-            ws.merge_range(1, 0, 1, self.left_width - 1, step.note, self._fmt(note_spec))
+            ws.merge_range(1, 0, 1, self.left_width - 1, _clean(step.note), self._fmt(note_spec))
             structural |= {(1, 1), (2, 1)}
             ws.freeze_panes(2, 0)
             fence_rows: dict[str, set[int]] = {}
@@ -592,9 +583,9 @@ class _Progressive:
                 if b.title != last_step.title:
                     label += f" · {b.title}"
                 if latest == si:
-                    header, header_fmt = f"{NEW_MARK} {label}", self._fmt({"bg_color": NEW_FILL})
+                    header, header_fmt = _clean(label), self._fmt({"bg_color": NEW_FILL})
                 else:
-                    header, header_fmt = label, self._fmt({})
+                    header, header_fmt = _clean(label), self._fmt({})
                 if b.last_col > b.first_col:
                     ws.merge_range(b.top - 1, b.first_col - 1, b.top - 1, b.last_col - 1, header, header_fmt)
                 else:
@@ -654,7 +645,8 @@ class _Progressive:
         self.wb.close()
         return ProgressiveBuild(path=str(path), sheet_names=[s.tab for s in self.steps], expected_values=expected,
                                 notes=list(self.classic.notes), steps=self.steps, first_step=first_step,
-                                structural=structural, tab_cells=tab_cells, classic=self.classic)
+                                structural=structural, tab_cells=tab_cells, classic=self.classic,
+                                blocks=self.blocks)
 
 
 def write_progressive_workbook(solution: ProjectSolution, path: str | Path) -> ProgressiveBuild:
